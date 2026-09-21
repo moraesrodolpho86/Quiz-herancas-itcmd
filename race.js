@@ -1,6 +1,49 @@
 const settings = window.FIREBASE_SETTINGS;
+const questions = window.QUIZ_QUESTIONS || [];
+const total = questions.length || 6;
 const playersEl = document.getElementById("players");
 const statusEl = document.getElementById("status");
+const onlineCountEl = document.getElementById("onlineCount");
+const finishedCountEl = document.getElementById("finishedCount");
+const totalQuestionsEl = document.getElementById("totalQuestions");
+const podiumSection = document.getElementById("podiumSection");
+const podiumEl = document.getElementById("podium");
+const podiumTitle = document.getElementById("podiumTitle");
+totalQuestionsEl.textContent = total;
+
+function withRanks(list){
+  let previousScore = null, previousRank = 0;
+  return list.map((p,i)=>{
+    const score = p.score || 0;
+    const rank = score === previousScore ? previousRank : i + 1;
+    previousScore = score; previousRank = rank;
+    return {...p, rank};
+  });
+}
+function ordinal(rank){ return `${rank}º`; }
+function rankClass(rank){ return rank===1?'gold':rank===2?'silver':rank===3?'bronze':''; }
+function laneHTML(p){
+  const score = p.score || 0;
+  const pct = Math.min(100, Math.round(score/total*100));
+  return `<div class="lane-card ${p.rank===1?'leader':''}">
+    <div class="rank-badge ${rankClass(p.rank)}">${ordinal(p.rank)}</div>
+    <div class="lane-center">
+      <div class="lane-meta"><div class="lane-name"><span class="online-dot"></span>${p.initials || '--'}</div><span class="score-pill">${score}/${total} • ${pct}%</span></div>
+      <div class="lane-track"><div class="lane-runner" style="left:calc(8px + (100% - 82px) * ${pct/100})">🏃</div></div>
+    </div>
+    <div class="lane-stats"><strong>${score}</strong><small>${score===1?'acerto':'acertos'}</small></div>
+  </div>`;
+}
+function renderPodium(ranked, allFinished){
+  if(!ranked.length){ podiumSection.classList.add('hidden'); return; }
+  const top = ranked.slice(0,3);
+  podiumSection.classList.remove('hidden');
+  podiumTitle.textContent = allFinished ? 'Pódio final' : 'Pódio provisório';
+  const order = top.length >= 3 ? [top[1], top[0], top[2]] : top.length===2 ? [top[1],top[0]] : top;
+  const cls = p => p.rank===1?'first':p.rank===2?'second':'third';
+  podiumEl.innerHTML = order.map(p=>`<div class="podium-place ${cls(p)}"><div class="podium-runner">🏃</div><div class="podium-block"><div class="podium-number">${ordinal(p.rank)}</div><div class="podium-name">${p.initials||'--'}</div><div class="podium-score">${p.score||0}/${total} acertos</div></div></div>`).join('');
+}
+
 if (!settings.enabled) {
   playersEl.innerHTML = '<div class="stat"><strong>Modo demonstração</strong><span class="mini">Conecte o Firebase para mostrar a corrida multiplayer.</span></div>';
 } else {
@@ -8,13 +51,16 @@ if (!settings.enabled) {
   const dbMod = await import("https://www.gstatic.com/firebasejs/12.19.0/firebase-database.js");
   const app = appMod.initializeApp(settings.config);
   const db = dbMod.getDatabase(app);
-  statusEl.textContent = "Online";
+  statusEl.textContent = "Conectado";
   dbMod.onValue(dbMod.ref(db, "players"), snap => {
-    const data = snap.val() || {};
-    const list = Object.values(data).filter(p=>p.online).sort((a,b)=>(b.score||0)-(a.score||0));
-    playersEl.innerHTML = list.length ? list.map(p => {
-      const pct = Math.round(((p.score||0)/6)*100);
-      return `<div class="race-wrap"><div class="race-title"><strong><span class="online-dot"></span>${p.initials}</strong><span>${p.score||0}/6</span></div><div class="track"><div class="runner" style="left:calc(10px + (100% - 110px) * ${pct/100})">🏃<span class="runner-label">${p.initials}</span></div></div></div>`;
-    }).join("") : '<p class="subtitle">Nenhum jogador online ainda.</p>';
+    const all = Object.values(snap.val() || {});
+    const online = all.filter(p=>p.online).sort((a,b)=>(b.score||0)-(a.score||0) || (a.updatedAt||0)-(b.updatedAt||0));
+    const ranked = withRanks(online);
+    const finished = all.filter(p=>p.finished).length;
+    onlineCountEl.textContent = online.length;
+    finishedCountEl.textContent = finished;
+    const allOnlineFinished = online.length>0 && online.every(p=>p.finished);
+    playersEl.innerHTML = ranked.length ? ranked.map(laneHTML).join("") : '<div class="empty-state"><div style="font-size:42px">🏃💨</div><p class="subtitle">A corrida ainda está vazia. Assim que alguém entrar, aparecerá aqui.</p></div>';
+    renderPodium(ranked, allOnlineFinished);
   });
 }

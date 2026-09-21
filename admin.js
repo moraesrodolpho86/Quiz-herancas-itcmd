@@ -1,17 +1,8 @@
-const settings = window.FIREBASE_SETTINGS;
-const listEl = document.getElementById("adminPlayers");
-if(!settings.enabled){
-  listEl.innerHTML='<p class="subtitle">Conecte o Firebase para acompanhar os jogadores ao vivo.</p>';
-}else{
-  const appMod = await import("https://www.gstatic.com/firebasejs/12.19.0/firebase-app.js");
-  const dbMod = await import("https://www.gstatic.com/firebasejs/12.19.0/firebase-database.js");
-  const app=appMod.initializeApp(settings.config); const db=dbMod.getDatabase(app);
-  document.getElementById("adminStatus").textContent="Online";
-  dbMod.onValue(dbMod.ref(db,"players"), snap=>{
-    const arr=Object.values(snap.val()||{});
-    const online=arr.filter(p=>p.online);
-    document.getElementById("onlineCount").textContent=online.length;
-    document.getElementById("finishedCount").textContent=arr.filter(p=>p.finished).length;
-    listEl.innerHTML=arr.sort((a,b)=>(b.score||0)-(a.score||0)).map(p=>`<div class="player"><span>${p.online?'<span class="online-dot"></span>':''}<strong>${p.initials||'--'}</strong></span><span>${p.score||0}/6</span></div>`).join('') || '<p class="subtitle">Nenhum participante ainda.</p>';
-  });
+const settings=window.FIREBASE_SETTINGS;const total=(window.QUIZ_QUESTIONS||[]).length||6;const listEl=document.getElementById("adminPlayers");
+function ranks(arr){let ps=null,pr=0;return arr.map((p,i)=>{const s=p.score||0;const r=s===ps?pr:i+1;ps=s;pr=r;return{...p,rank:r}})}
+if(!settings.enabled){listEl.innerHTML='<p class="subtitle">Conecte o Firebase para acompanhar os jogadores ao vivo.</p>'}else{
+ const appMod=await import("https://www.gstatic.com/firebasejs/12.19.0/firebase-app.js");const dbMod=await import("https://www.gstatic.com/firebasejs/12.19.0/firebase-database.js");const app=appMod.initializeApp(settings.config);const db=dbMod.getDatabase(app);document.getElementById("adminStatus").textContent="🟢 Online";
+ dbMod.onValue(dbMod.ref(db,"players"),snap=>{const arr=Object.values(snap.val()||{});const ordered=ranks(arr.sort((a,b)=>(b.score||0)-(a.score||0)));const online=arr.filter(p=>p.online);document.getElementById("onlineCount").textContent=online.length;document.getElementById("finishedCount").textContent=arr.filter(p=>p.finished).length;document.getElementById("topScore").textContent=ordered[0]?.score||0;
+ listEl.innerHTML=ordered.map(p=>{const pct=Math.round(((p.score||0)/total)*100);return `<div class="admin-player"><div class="admin-rank">${p.rank}º</div><div class="admin-name">${p.online?'<span class="online-dot"></span> ':''}${p.initials||'--'}</div><div><strong>${p.score||0}/${total}</strong></div><div class="mini">${p.finished?'Finalizou 🏁':p.online?'Online':'Offline'}</div><div class="admin-progress"><i style="width:${pct}%"></i></div></div>`}).join('')||'<p class="subtitle">Nenhum participante ainda.</p>';
+ });
 }

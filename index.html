@@ -6,34 +6,44 @@
   <title>Quiz — Heranças, desigualdade e ITCMD</title>
   <link rel="stylesheet" href="style.css" />
 </head>
-<body>
+<body class="player-page">
   <main class="container">
-    <div class="brand"><h1>Heranças, desigualdade e ITCMD</h1><span class="badge" id="modeBadge">Modo demonstração</span></div>
+    <div class="brand">
+      <div><div class="eyebrow">QUIZ INTERATIVO</div><h1>Heranças, desigualdade e ITCMD</h1></div>
+      <span class="badge" id="modeBadge">Modo demonstração</span>
+    </div>
 
-    <section id="joinScreen" class="card center">
-      <div style="font-size:58px">🏁</div>
-      <h2>Entre na corrida</h2>
-      <p class="subtitle">Digite duas iniciais — podem ser letras ou números. Cada resposta correta faz seu corredor avançar.</p>
-      <div class="initials"><input id="initials" maxlength="2" autocomplete="off" placeholder="RM" /><button id="joinBtn">ENTRAR NA CORRIDA</button></div>
-      <p class="mini">Não é necessário instalar aplicativo.</p>
+    <section id="joinScreen" class="card center join-card">
+      <div class="hero-icon">🏃</div>
+      <h2>Entre na corrida!</h2>
+      <p class="subtitle">Escolha duas iniciais. A cada resposta correta, seu corredor avança na pista.</p>
+      <div class="initials"><input id="initials" maxlength="2" autocomplete="off" placeholder="RM" aria-label="Duas iniciais" /><button id="joinBtn">ENTRAR NA CORRIDA</button></div>
+      <div class="join-notes"><span>📱 Sem aplicativo</span><span>⚡ Atualização ao vivo</span><span>🏁 6 etapas</span></div>
     </section>
 
     <section id="quizScreen" class="card hidden">
-      <div class="topbar"><strong id="playerName">RM</strong><div class="progress"><div id="progressBar"></div></div><span id="questionCounter">1 / 6</span></div>
+      <div class="topbar">
+        <span class="player-chip">🏃 <strong id="playerName">RM</strong></span>
+        <div class="progress"><div id="progressBar"></div></div>
+        <span class="question-chip" id="questionCounter">1 / 6</span>
+      </div>
       <div id="questionText" class="question"></div>
       <div id="options" class="options"></div>
       <div id="feedback" class="feedback hidden"></div>
-      <div style="margin-top:16px;text-align:right"><button id="nextBtn" class="hidden">PRÓXIMA</button></div>
-      <div class="race-wrap">
-        <div class="race-title"><span>LARGADA</span><span>CHEGADA 🏁</span></div>
-        <div class="track" id="track"><div class="runner" id="runner">🏃<span class="runner-label" id="runnerLabel"></span></div></div>
+      <div class="action-row"><button id="nextBtn" class="hidden">PRÓXIMA</button></div>
+      <div class="race-wrap personal-race">
+        <div class="race-title"><span>🚦 LARGADA</span><span id="personalScore">0 acertos</span><span>CHEGADA 🏁</span></div>
+        <div class="track" id="track">
+          <div class="track-markers" id="trackMarkers"></div>
+          <div class="runner" id="runner">🏃<span class="runner-label" id="runnerLabel"></span></div>
+        </div>
       </div>
     </section>
 
-    <section id="finishScreen" class="card center hidden">
-      <div style="font-size:58px">🏁</div>
-      <h2>Corrida encerrada</h2>
-      <div class="finish-score"><span id="scoreFinal">0</span>/6</div>
+    <section id="finishScreen" class="card center hidden finish-card">
+      <div class="hero-icon">🏁</div>
+      <h2>Você cruzou a linha de chegada!</h2>
+      <div class="finish-score"><span id="scoreFinal">0</span>/<span id="scoreTotal">6</span></div>
       <p id="finishText" class="subtitle"></p>
       <button id="restartBtn">JOGAR NOVAMENTE</button>
     </section>
