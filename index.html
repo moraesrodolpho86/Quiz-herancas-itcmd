@@ -14,26 +14,28 @@
     </div>
 
     <section id="joinScreen" class="card center join-card">
-      <div class="hero-icon">🏃</div>
+      <div class="hero-icon">🏃🏾‍➡️</div>
       <h2>Entre na corrida!</h2>
       <p class="subtitle">Escolha duas iniciais. Você avança uma etapa a cada pergunta respondida.</p>
       <div class="initials"><input id="initials" maxlength="2" autocomplete="off" placeholder="RM" aria-label="Duas iniciais" /><button id="joinBtn">ENTRAR NA CORRIDA</button></div>
       <div class="join-notes"><span>📱 Sem aplicativo</span><span>⚡ Atualização ao vivo</span><span>🏁 6 etapas</span></div>
+      <button id="soundToggleJoin" class="sound-toggle" type="button">🔊 Som ligado</button>
     </section>
 
     <section id="waitingScreen" class="card center hidden waiting-card">
-      <div class="hero-icon">🏃</div>
+      <div class="hero-icon">🏃🏾‍➡️</div>
       <h2>Você está na largada!</h2>
       <p class="subtitle">Aguarde o apresentador iniciar a partida.</p>
+      <div id="readyCount" class="ready-count">1 jogador pronto</div>
       <div class="waiting-player"><span>Seu corredor:</span><strong id="waitingInitials">--</strong></div>
       <div class="waiting-pulse"><span></span><span></span><span></span></div>
     </section>
 
     <section id="quizScreen" class="card hidden">
       <div class="topbar">
-        <span class="player-chip">🏃 <strong id="playerName">RM</strong></span>
+        <span class="player-chip">🏃🏾‍➡️ <strong id="playerName">RM</strong></span>
         <div class="progress"><div id="progressBar"></div></div>
-        <span class="question-chip" id="questionCounter">1 / 6</span>
+        <span class="question-chip" id="questionCounter">1 / 6</span><button id="soundToggleQuiz" class="sound-toggle compact" type="button">🔊</button>
       </div>
       <div id="questionText" class="question"></div>
       <div id="options" class="options"></div>
@@ -43,7 +45,7 @@
         <div class="race-title"><span>🚦 LARGADA</span><span id="personalScore">0 acertos</span><span>CHEGADA 🏁</span></div>
         <div class="track" id="track">
           <div class="track-markers" id="trackMarkers"></div>
-          <div class="runner emoji-runner" id="runner"><span class="runner-emoji" aria-hidden="true">🏃</span><span class="runner-label" id="runnerLabel"></span></div>
+          <div class="runner emoji-runner" id="runner"><span class="runner-emoji" aria-hidden="true">🏃🏾‍➡️</span><span class="runner-label" id="runnerLabel"></span></div>
         </div>
       </div>
 
@@ -60,6 +62,7 @@
       <p id="finishText" class="subtitle"></p>
       <button id="restartBtn">JOGAR NOVAMENTE</button>
     </section>
+    <div id="confettiLayer" class="confetti-layer" aria-hidden="true"></div>
   </main>
 
   <main id="presenterAuth" class="container hidden presenter-auth-shell">
@@ -86,7 +89,9 @@
       </div>
       <div class="presenter-actions">
         <button id="startGameBtn" class="soft-btn primary">Iniciar partida</button>
+        <button id="endGameBtn" class="soft-btn warn">Encerrar partida</button>
         <button id="fullscreenBtn" class="soft-btn">Tela cheia</button>
+        <button id="copyLinkBtn" class="soft-btn">Copiar link</button>
         <button id="resetGameBtn" class="soft-btn danger">Nova Partida</button>
       </div>
     </header>
@@ -102,6 +107,23 @@
       <div id="presenterRoster" class="players-now-list"><span class="mini">Aguardando participantes...</span></div>
     </section>
 
+    <section class="presenter-tools-grid">
+      <div class="card qr-card">
+        <div><span class="stage-kicker">ENTRADA</span><h2>QR Code dos participantes</h2></div>
+        <div id="participantQr" class="qr-box"></div>
+        <div id="participantUrl" class="mini url-mini"></div>
+      </div>
+      <div class="card summary-card">
+        <div><span class="stage-kicker">RESUMO</span><h2>Estatísticas da partida</h2></div>
+        <div class="summary-grid">
+          <div><strong id="summaryPlayers">0</strong><span>participantes</span></div>
+          <div><strong id="summaryAverage">0,0</strong><span>média de acertos</span></div>
+          <div><strong id="summaryBest">—</strong><span>questão mais acertada</span></div>
+          <div><strong id="summaryHardest">—</strong><span>questão mais difícil</span></div>
+        </div>
+      </div>
+    </section>
+
     <section class="race-stage card">
       <div class="stage-heading">
         <div><span class="stage-kicker">CLASSIFICAÇÃO</span><h2>Corrida ao vivo</h2></div>
@@ -113,6 +135,22 @@
     <section id="podiumSection" class="podium-section card hidden">
       <div class="stage-heading"><div><span class="stage-kicker">DESTAQUES</span><h2 id="podiumTitle">Pódio provisório</h2></div></div>
       <div id="podium" class="podium"></div>
+    </section>
+
+    <section id="accuracySection" class="accuracy-section card hidden">
+      <div class="stage-heading">
+        <div><span class="stage-kicker">DESEMPENHO</span><h2 id="accuracyTitle">Ranking por acertos</h2></div>
+        <span class="mini">Desempate pelo menor tempo total de conclusão</span>
+      </div>
+      <div id="accuracyList" class="accuracy-list"></div>
+    </section>
+
+    <section id="questionResultsSection" class="question-results-section card hidden">
+      <div class="stage-heading">
+        <div><span class="stage-kicker">RESPOSTAS</span><h2>Resultado por questão</h2></div>
+        <span class="mini">Distribuição das alternativas marcadas</span>
+      </div>
+      <div id="questionResults" class="question-results-grid"></div>
     </section>
 
     <section id="arrivalSection" class="arrival-section card hidden">
@@ -129,6 +167,7 @@
   <script src="questions.js"></script>
   <script src="firebase-config.js"></script>
   <script type="module" src="app.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
   <script type="module" src="presenter.js"></script>
 </body>
 </html>

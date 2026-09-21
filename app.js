@@ -10,8 +10,37 @@ if (!isPresenterMode) {
   let db = null, dbApi = null, playerRef = null;
   let gameStartedLocally = false;
   let lastStartToken = null;
+  let gameEnded = false;
+  let soundEnabled = true;
+  let audioCtx = null;
 
   $("scoreTotal").textContent = questions.length;
+
+  function getAudio(){
+    if(!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    return audioCtx;
+  }
+  function beep(freq=440,duration=.12,delay=0){
+    if(!soundEnabled) return;
+    try{
+      const ctx=getAudio(), osc=ctx.createOscillator(), gain=ctx.createGain();
+      osc.frequency.value=freq; osc.type='sine';
+      gain.gain.setValueAtTime(.0001,ctx.currentTime+delay);
+      gain.gain.exponentialRampToValueAtTime(.08,ctx.currentTime+delay+.01);
+      gain.gain.exponentialRampToValueAtTime(.0001,ctx.currentTime+delay+duration);
+      osc.connect(gain); gain.connect(ctx.destination);
+      osc.start(ctx.currentTime+delay); osc.stop(ctx.currentTime+delay+duration+.02);
+    }catch(e){}
+  }
+  function updateSoundButtons(){
+    const text=soundEnabled?'🔊 Som ligado':'🔇 Som desligado';
+    if($("soundToggleJoin")) $("soundToggleJoin").textContent=text;
+    if($("soundToggleQuiz")) $("soundToggleQuiz").textContent=soundEnabled?'🔊':'🔇';
+  }
+  function toggleSound(){ soundEnabled=!soundEnabled; updateSoundButtons(); if(soundEnabled) beep(520,.08); }
+  $("soundToggleJoin")?.addEventListener("click",toggleSound);
+  $("soundToggleQuiz")?.addEventListener("click",toggleSound);
+  updateSoundButtons();
 
   function buildMarkers(){
     const el = $("trackMarkers"); if(!el) return;
@@ -42,6 +71,8 @@ if (!isPresenterMode) {
     if(!el || !countEl) return;
     const online = Object.values(playersObj || {}).filter(p=>p && p.online).sort((a,b)=>(b.score||0)-(a.score||0) || String(a.initials||"").localeCompare(String(b.initials||"")));
     countEl.textContent = `${online.length} online`;
+    const ready = $("readyCount");
+    if(ready) ready.textContent = `${online.length} ${online.length===1?'jogador pronto':'jogadores prontos'}`;
     if(!online.length){ el.innerHTML='<span class="mini">Aguardando participantes...</span>'; return; }
     el.innerHTML = online.map(p=>`<span class="player-roster-chip ${p.initials===initials?'me':''}"><b>${p.initials||'--'}</b><small>${p.score||0}/${questions.length}</small></span>`).join('');
   }
@@ -62,7 +93,7 @@ if (!isPresenterMode) {
 
     if(db&&dbApi){
       playerRef=dbApi.ref(db,`players/${playerId}`);
-      await dbApi.set(playerRef,{initials,score:0,current:0,answered:0,online:true,finished:false,updatedAt:dbApi.serverTimestamp()});
+      await dbApi.set(playerRef,{initials,score:0,current:0,answered:0,online:true,finished:false,responses:{},startAt:null,finishAt:null,totalTime:null,updatedAt:dbApi.serverTimestamp()});
       const connectedRef=dbApi.ref(db,".info/connected");
       dbApi.onValue(connectedRef,snap=>{
         if(snap.val()===true){
@@ -88,15 +119,26 @@ if (!isPresenterMode) {
     for(const value of ["3","2","1"]){
       number.textContent=value;
       number.classList.remove("pop"); void number.offsetWidth; number.classList.add("pop");
+      beep(value==="1"?660:440,.12);
       await sleep(850);
     }
     overlay.classList.add("hidden");
   }
 
   async function handleGameState(game){
-    if(!initials || gameStartedLocally) return;
+    if(!initials) return;
     const status = game?.status || 'waiting';
     const token = game?.startToken || null;
+    if(status === 'ended'){
+      gameEnded = true;
+      if(gameStartedLocally){
+        document.querySelectorAll('.option').forEach(b=>b.disabled=true);
+        $("nextBtn")?.classList.add('hidden');
+        const fb=$("feedback"); if(fb){ fb.textContent='Partida encerrada pelo apresentador.'; fb.className='feedback bad'; }
+      }
+      return;
+    }
+    if(gameStartedLocally) return;
     if(status === 'countdown' && token && token !== lastStartToken){
       lastStartToken = token;
       await startCountdown();
@@ -110,6 +152,8 @@ if (!isPresenterMode) {
 
   function startQuiz(){
     gameStartedLocally = true;
+    gameEnded = false;
+    if(playerRef&&dbApi) dbApi.update(playerRef,{startAt:dbApi.serverTimestamp(),updatedAt:dbApi.serverTimestamp()});
     $("waitingScreen").classList.add("hidden");
     $("quizScreen").classList.remove("hidden");
     renderQuestion();
@@ -146,16 +190,22 @@ if (!isPresenterMode) {
       clicked.classList.add("correct");
       $("feedback").textContent="🎉 Acertou!";
       $("feedback").className="feedback ok";
+      beep(720,.12); beep(880,.12,.10);
     }else{
       clicked.classList.add("wrong");
       $("feedback").textContent="Quase! A resposta correta está destacada.";
       $("feedback").className="feedback bad";
+      beep(230,.18);
     }
     answeredCount++;
     moveRunner();
     $("progressBar").style.width=`${(answeredCount/questions.length)*100}%`;
     $("personalScore").textContent=`${score} ${score===1?'acerto':'acertos'}`;
-    if(playerRef&&dbApi) await dbApi.update(playerRef,{score,current:current+1,answered:answeredCount,updatedAt:dbApi.serverTimestamp()});
+    if(playerRef&&dbApi){
+      const updates={score,current:current+1,answered:answeredCount,updatedAt:dbApi.serverTimestamp()};
+      updates[`responses/q${current}`]={selected:idx,correct:idx===q.correct,answeredAt:dbApi.serverTimestamp()};
+      await dbApi.update(playerRef,updates);
+    }
     $("nextBtn").textContent=current===questions.length-1?"VER RESULTADO":"PRÓXIMA";
     $("nextBtn").classList.remove("hidden");
   }
@@ -168,10 +218,28 @@ if (!isPresenterMode) {
   }
 
   $("nextBtn").addEventListener("click",()=>{
+    if(gameEnded) return;
     if(current>=questions.length-1){ finish(); return; }
     current++;
     renderQuestion();
   });
+
+  function launchConfetti(){
+    const layer=$("confettiLayer"); if(!layer) return;
+    layer.innerHTML='';
+    const chars=['●','■','▲','★'];
+    for(let i=0;i<44;i++){
+      const s=document.createElement('span');
+      s.textContent=chars[i%chars.length];
+      s.style.left=`${Math.random()*100}%`;
+      s.style.animationDelay=`${Math.random()*.7}s`;
+      s.style.animationDuration=`${1.8+Math.random()*1.5}s`;
+      s.style.fontSize=`${9+Math.random()*13}px`;
+      layer.appendChild(s);
+    }
+    layer.classList.add('active');
+    setTimeout(()=>{layer.classList.remove('active');layer.innerHTML='';},3800);
+  }
 
   function finish(){
     answeredCount = questions.length;
@@ -182,7 +250,17 @@ if (!isPresenterMode) {
     $("scoreFinal").textContent=score;
     const pct=Math.round(score/questions.length*100);
     $("finishText").textContent=`${initials}, você acertou ${score} de ${questions.length} questões (${pct}%). Seu corredor cruzou a linha de chegada.`;
-    if(playerRef&&dbApi) dbApi.update(playerRef,{answered:questions.length,current:questions.length,finished:true,online:true,finishAt:dbApi.serverTimestamp(),updatedAt:dbApi.serverTimestamp()});
+    beep(660,.12); beep(830,.12,.14); beep(990,.18,.28);
+    launchConfetti();
+    if(playerRef&&dbApi){
+      dbApi.get(playerRef).then(snap=>{
+        const data=snap.val()||{};
+        const start=typeof data.startAt==='number'?data.startAt:null;
+        const now=Date.now();
+        const totalTime=start?Math.max(0,now-start):null;
+        dbApi.update(playerRef,{answered:questions.length,current:questions.length,finished:true,online:true,finishAt:dbApi.serverTimestamp(),totalTime,updatedAt:dbApi.serverTimestamp()});
+      });
+    }
   }
 
   $("restartBtn").addEventListener("click",()=>location.reload());

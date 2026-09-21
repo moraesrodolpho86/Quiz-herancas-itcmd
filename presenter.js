@@ -55,7 +55,19 @@ if (isPresenter) {
   const arrivalList = document.getElementById("arrivalList");
   const rosterEl = document.getElementById("presenterRoster");
   const startGameBtn = document.getElementById("startGameBtn");
+  const endGameBtn = document.getElementById("endGameBtn");
+  const accuracySection = document.getElementById("accuracySection");
+  const accuracyList = document.getElementById("accuracyList");
+  const accuracyTitle = document.getElementById("accuracyTitle");
+  const questionResultsSection = document.getElementById("questionResultsSection");
+  const questionResultsEl = document.getElementById("questionResults");
+  const summaryPlayers = document.getElementById("summaryPlayers");
+  const summaryAverage = document.getElementById("summaryAverage");
+  const summaryBest = document.getElementById("summaryBest");
+  const summaryHardest = document.getElementById("summaryHardest");
   totalQuestionsEl.textContent = total;
+  let audioCtx=null;
+  function beep(freq=440,duration=.12,delay=0){ try{ const ctx=audioCtx||(audioCtx=new (window.AudioContext||window.webkitAudioContext)()); const o=ctx.createOscillator(),g=ctx.createGain(); o.frequency.value=freq;o.type='sine';g.gain.setValueAtTime(.0001,ctx.currentTime+delay);g.gain.exponentialRampToValueAtTime(.07,ctx.currentTime+delay+.01);g.gain.exponentialRampToValueAtTime(.0001,ctx.currentTime+delay+duration);o.connect(g);g.connect(ctx.destination);o.start(ctx.currentTime+delay);o.stop(ctx.currentTime+delay+duration+.02);}catch(e){} }
 
   function sleep(ms){ return new Promise(resolve=>setTimeout(resolve,ms)); }
   async function showPresenterCountdown(){
@@ -65,17 +77,32 @@ if (isPresenter) {
     for(const value of ["3","2","1"]){
       number.textContent=value;
       number.classList.remove("pop"); void number.offsetWidth; number.classList.add("pop");
+      beep(value==="1"?660:440,.12);
       await sleep(850);
     }
     overlay.classList.add("hidden");
   }
 
+  function elapsed(p){
+    if(typeof p.totalTime==='number') return p.totalTime;
+    if(typeof p.startAt==='number' && typeof p.finishAt==='number') return Math.max(0,p.finishAt-p.startAt);
+    return Number.MAX_SAFE_INTEGER;
+  }
+  function formatTime(ms){
+    if(!Number.isFinite(ms) || ms===Number.MAX_SAFE_INTEGER) return '—';
+    const s=Math.max(0,Math.round(ms/1000));
+    const m=Math.floor(s/60), r=s%60;
+    return m?`${m}m ${String(r).padStart(2,'0')}s`:`${r}s`;
+  }
+  function sortByPerformance(list){
+    return [...list].sort((a,b)=>(b.score||0)-(a.score||0) || elapsed(a)-elapsed(b) || (b.answered||0)-(a.answered||0) || String(a.initials||'').localeCompare(String(b.initials||'')));
+  }
   function withRanks(list){
-    let previousScore = null, previousRank = 0;
+    let previousScore = null, previousTime = null, previousRank = 0;
     return list.map((p,i)=>{
-      const score = p.score || 0;
-      const rank = score === previousScore ? previousRank : i + 1;
-      previousScore = score; previousRank = rank;
+      const score = p.score || 0, time=elapsed(p);
+      const rank = score === previousScore && time===previousTime ? previousRank : i + 1;
+      previousScore = score; previousTime=time; previousRank = rank;
       return {...p, rank};
     });
   }
@@ -95,7 +122,7 @@ if (isPresenter) {
       <div class="rank-badge ${rankClass(p.rank)}">${ordinal(p.rank)}</div>
       <div class="lane-center">
         <div class="lane-meta"><div class="lane-name"><span class="online-dot"></span>${p.initials || '--'}</div><span class="score-pill">${score}/${total} acertos • ${answered}/${total} etapas</span></div>
-        <div class="lane-track"><div class="lane-runner emoji-lane-runner" style="left:calc(8px + (100% - 70px) * ${pct/100})"><span aria-hidden="true">🏃</span></div></div>
+        <div class="lane-track"><div class="lane-runner emoji-lane-runner" style="left:calc(8px + (100% - 70px) * ${pct/100})"><span aria-hidden="true">🏃🏾‍➡️</span></div></div>
       </div>
       <div class="lane-stats"><strong>${score}</strong><small>${score===1?'acerto':'acertos'}</small></div>
     </div>`;
@@ -105,7 +132,7 @@ if (isPresenter) {
     const finished = all.filter(p=>p.finished && p.finishAt).sort((a,b)=>(a.finishAt||Number.MAX_SAFE_INTEGER)-(b.finishAt||Number.MAX_SAFE_INTEGER));
     if(!finished.length){ arrivalSection.classList.add('hidden'); arrivalList.innerHTML=''; return; }
     arrivalSection.classList.remove('hidden');
-    arrivalList.innerHTML = finished.map((p,i)=>`<div class="arrival-item ${i<3?'top-arrival':''}"><span class="arrival-rank">${i+1}º</span><span class="arrival-runner">🏃</span><strong>${p.initials||'--'}</strong><span class="arrival-score">${p.score||0}/${total} acertos</span></div>`).join('');
+    arrivalList.innerHTML = finished.map((p,i)=>`<div class="arrival-item ${i<3?'top-arrival':''}"><span class="arrival-rank">${i+1}º</span><span class="arrival-runner">🏃🏾‍➡️</span><strong>${p.initials||'--'}</strong><span class="arrival-score">${p.score||0}/${total} acertos</span></div>`).join('');
   }
 
   function renderPodium(ranked, allFinished){
@@ -115,8 +142,59 @@ if (isPresenter) {
     podiumTitle.textContent = allFinished ? 'Pódio final' : 'Pódio provisório';
     const order = top.length >= 3 ? [top[1], top[0], top[2]] : top.length===2 ? [top[1],top[0]] : top;
     const cls = p => p.rank===1?'first':p.rank===2?'second':'third';
-    podiumEl.innerHTML = order.map(p=>`<div class="podium-place ${cls(p)}"><div class="podium-runner">🏃</div><div class="podium-block"><div class="podium-number">${ordinal(p.rank)}</div><div class="podium-name">${p.initials||'--'}</div><div class="podium-score">${p.score||0}/${total} acertos</div></div></div>`).join('');
+    podiumEl.innerHTML = order.map(p=>`<div class="podium-place ${cls(p)}"><div class="podium-runner">🏃🏾‍➡️</div><div class="podium-block"><div class="podium-number">${ordinal(p.rank)}</div><div class="podium-name">${p.initials||'--'}</div><div class="podium-score">${p.score||0}/${total} acertos</div></div></div>`).join('');
   }
+
+  function renderAccuracy(all, finalMode){
+    const candidates = sortByPerformance(all.filter(p=>(p.answered||0)>0 || p.finished));
+    if(!candidates.length){ accuracySection.classList.add('hidden'); accuracyList.innerHTML=''; return; }
+    accuracySection.classList.remove('hidden');
+    accuracyTitle.textContent = finalMode ? 'Ranking final por acertos' : 'Ranking provisório por acertos';
+    accuracyList.innerHTML = candidates.map((p,i)=>`<div class="accuracy-item"><span class="accuracy-rank">${i+1}º</span><strong>${p.initials||'--'}</strong><span>${p.score||0}/${total} acertos</span><span>${p.finished?formatTime(elapsed(p)):'em andamento'}</span></div>`).join('');
+  }
+
+  function responseStats(all){
+    return questions.map((q,qi)=>{
+      const counts=[0,0,0,0]; let totalAnswers=0,correct=0;
+      all.forEach(p=>{ const r=p.responses?.[`q${qi}`]; if(r && Number.isInteger(r.selected)){ counts[r.selected]++; totalAnswers++; if(r.correct) correct++; } });
+      return {counts,totalAnswers,correct,rate:totalAnswers?correct/totalAnswers:0};
+    });
+  }
+
+  function renderQuestionResults(all){
+    const stats=responseStats(all);
+    const hasAny=stats.some(s=>s.totalAnswers>0);
+    questionResultsSection.classList.toggle('hidden',!hasAny);
+    if(!hasAny){ questionResultsEl.innerHTML=''; return; }
+    questionResultsEl.innerHTML=stats.map((s,qi)=>{
+      const max=Math.max(1,s.totalAnswers);
+      return `<div class="question-result-card"><div class="question-result-head"><strong>Questão ${qi+1}</strong><span>${s.totalAnswers} respostas • ${Math.round(s.rate*100)}% acerto</span></div>${['A','B','C','D'].map((l,i)=>`<div class="answer-bar-row"><span>${l}</span><div class="answer-bar"><i style="width:${Math.round(s.counts[i]/max*100)}%"></i></div><b>${s.counts[i]}</b></div>`).join('')}</div>`;
+    }).join('');
+  }
+
+  function renderSummary(all){
+    summaryPlayers.textContent=all.length;
+    const avg=all.length?all.reduce((s,p)=>s+(p.score||0),0)/all.length:0;
+    summaryAverage.textContent=avg.toLocaleString('pt-BR',{minimumFractionDigits:1,maximumFractionDigits:1});
+    const stats=responseStats(all).map((s,i)=>({...s,i})).filter(s=>s.totalAnswers>0);
+    if(!stats.length){ summaryBest.textContent='—'; summaryHardest.textContent='—'; return; }
+    const best=[...stats].sort((a,b)=>b.rate-a.rate || b.totalAnswers-a.totalAnswers)[0];
+    const hard=[...stats].sort((a,b)=>a.rate-b.rate || b.totalAnswers-a.totalAnswers)[0];
+    summaryBest.textContent=`Q${best.i+1} (${Math.round(best.rate*100)}%)`;
+    summaryHardest.textContent=`Q${hard.i+1} (${Math.round(hard.rate*100)}%)`;
+  }
+
+  function buildQr(){
+    const url=window.location.origin+window.location.pathname;
+    const box=document.getElementById('participantQr'), label=document.getElementById('participantUrl');
+    if(label) label.textContent=url;
+    if(box && window.QRCode){ box.innerHTML=''; new QRCode(box,{text:url,width:150,height:150,correctLevel:QRCode.CorrectLevel.M}); }
+  }
+  buildQr();
+  document.getElementById('copyLinkBtn')?.addEventListener('click', async ()=>{
+    const url=window.location.origin+window.location.pathname;
+    try{ await navigator.clipboard.writeText(url); const b=document.getElementById('copyLinkBtn'); const old=b.textContent; b.textContent='Link copiado!'; setTimeout(()=>b.textContent=old,1400); }catch(e){ window.prompt('Copie o link:',url); }
+  });
 
   document.getElementById('fullscreenBtn')?.addEventListener('click', async ()=>{
     if(!document.fullscreenElement){ await document.documentElement.requestFullscreen?.(); }
@@ -149,12 +227,19 @@ if (isPresenter) {
       await dbMod.update(gameRef,{status:'started',updatedAt:dbMod.serverTimestamp()});
     });
 
+    endGameBtn?.addEventListener('click', async ()=>{
+      const ok=window.confirm('Deseja encerrar a partida e congelar os resultados atuais?');
+      if(!ok) return;
+      await dbMod.update(gameRef,{status:'ended',endedAt:dbMod.serverTimestamp(),updatedAt:dbMod.serverTimestamp()});
+    });
+
     document.getElementById('resetGameBtn')?.addEventListener('click', async ()=>{
       const ok = window.confirm('Deseja iniciar uma nova partida? Isso limpará os jogadores e resultados atuais.');
       if(!ok) return;
       await dbMod.remove(playersRef);
       await dbMod.set(gameRef,{status:'waiting',startToken:null,updatedAt:dbMod.serverTimestamp()});
       startGameBtn.disabled = false;
+      endGameBtn.disabled = true;
     });
 
     dbMod.onValue(gameRef, snap=>{
@@ -168,21 +253,30 @@ if (isPresenter) {
       } else if(game.status==='started'){
         startGameBtn.disabled = true;
         startGameBtn.textContent = 'Partida em andamento';
+        endGameBtn.disabled = false;
+      } else if(game.status==='ended'){
+        startGameBtn.disabled = true;
+        startGameBtn.textContent = 'Partida encerrada';
+        endGameBtn.disabled = true;
       }
     });
 
     dbMod.onValue(playersRef, snap => {
       const all = Object.values(snap.val() || {});
-      const online = all.filter(p=>p.online).sort((a,b)=>(b.score||0)-(a.score||0) || (a.updatedAt||0)-(b.updatedAt||0));
-      const ranked = withRanks(online);
+      const online = all.filter(p=>p.online);
+      const ranked = withRanks(sortByPerformance(online));
       const finished = all.filter(p=>p.finished).length;
       onlineCountEl.textContent = online.length;
       finishedCountEl.textContent = finished;
+      const gameSnapNow = null;
       const allOnlineFinished = online.length>0 && online.every(p=>p.finished);
-      playersEl.innerHTML = ranked.length ? ranked.map(laneHTML).join("") : '<div class="empty-state"><div style="font-size:42px">🏃</div><p class="subtitle">A corrida ainda está vazia. Assim que alguém entrar, aparecerá aqui.</p></div>';
+      playersEl.innerHTML = ranked.length ? ranked.map(laneHTML).join("") : '<div class="empty-state"><div style="font-size:42px">🏃🏾‍➡️</div><p class="subtitle">A corrida ainda está vazia. Assim que alguém entrar, aparecerá aqui.</p></div>';
       renderRoster(online);
       renderPodium(ranked, allOnlineFinished);
       renderArrivals(all);
+      renderAccuracy(all, allOnlineFinished);
+      renderQuestionResults(all);
+      renderSummary(all);
     });
     }
   }

@@ -1,3 +1,5 @@
+QUIZ — HERANÇAS, DESIGUALDADE E ITCMD — V10 APRIMORADA
+
 QUIZ — HERANÇAS, DESIGUALDADE E ITCMD — V9 COM PIN DO APRESENTADOR
 
 QUIZ — HERANÇAS, DESIGUALDADE E ITCMD — V8
@@ -22,3 +24,16 @@ V9:
 - autorização mantida apenas na sessão do navegador
 - subtítulo explicativo removido do modo apresentador
 - autoria no canto superior direito: © 2026 Rodolpho Moraes
+
+
+V10:
+- corredor 🏃🏾‍➡️ voltado para a direita
+- contador de jogadores prontos na espera
+- som opcional
+- confete na conclusão
+- QR Code e copiar link no modo apresentador
+- botão Encerrar partida
+- ranking final por acertos com desempate por tempo
+- ordem de chegada separada
+- estatísticas e resultados por questão
+- feedback curto mantido
