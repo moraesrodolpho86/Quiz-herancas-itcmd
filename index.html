@@ -1,167 +1,568 @@
 <!doctype html>
 <html lang="pt-BR">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Quiz — Heranças, desigualdade e ITCMD</title>
-  <link rel="stylesheet" href="style.css" />
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#101224">
+<title>Quiz Runner — Heranças & ITCMD</title>
+<style>
+:root{
+  --bg:#101224;--panel:#181b33;--panel2:#232847;--ink:#f8f7ff;
+  --gold:#ffd84d;--cyan:#45e0ff;--good:#55e08d;--bad:#ff6077;
+  --purple:#8369ff;--shadow:#05060c;--muted:#b5bad8;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;min-height:100%;background:var(--bg);color:var(--ink);font-family:"Courier New",monospace}
+body{
+  padding:max(7px,env(safe-area-inset-top)) max(7px,env(safe-area-inset-right))
+          max(8px,env(safe-area-inset-bottom)) max(7px,env(safe-area-inset-left));
+  touch-action:manipulation;overscroll-behavior:none
+}
+button,input{font:inherit}
+button{touch-action:manipulation}
+.hidden{display:none!important}
+#app{width:min(1180px,100%);margin:auto}
+.pixel{
+  background:var(--panel);border:4px solid white;box-shadow:7px 7px 0 var(--shadow)
+}
+.screen{padding:18px}
+.title{margin:0;text-align:center;font-size:clamp(33px,7vw,70px);line-height:.9;text-shadow:5px 5px 0 #000}
+.subtitle{text-align:center;color:var(--gold);font-size:clamp(17px,3vw,28px);margin:10px 0 20px}
+.kicker{text-align:center;color:var(--cyan);font-weight:bold;font-size:13px;letter-spacing:.08em}
+.btn{
+  border:4px solid #fff;background:var(--purple);color:#fff;padding:13px 18px;min-height:52px;
+  box-shadow:5px 5px 0 #000;font-weight:bold;cursor:pointer;text-transform:uppercase
+}
+.btn.secondary{background:#2b3158}.btn.danger{background:#773247}
+.btn:active{transform:translate(3px,3px);box-shadow:2px 2px 0 #000}
+.center{text-align:center}.footer{text-align:center;margin-top:20px;color:#d5d8ec;font-size:13px}
+.instructions{max-width:760px;margin:18px auto;line-height:1.55}
+.joinRow{display:flex;gap:10px;justify-content:center;align-items:center;flex-wrap:wrap;margin:18px 0}
+.initials{
+  width:116px;text-transform:uppercase;text-align:center;font-size:25px;font-weight:bold;letter-spacing:.14em;
+  padding:12px;border:4px solid #fff;background:#0d1020;color:#fff;outline:none;box-shadow:5px 5px 0 #000
+}
+.note{color:var(--muted);font-size:12px;text-align:center}
+#countdown{
+  position:fixed;inset:0;z-index:100;background:rgba(6,7,16,.95);display:grid;place-items:center;
+  color:var(--gold);font-size:min(30vw,220px);font-weight:bold;text-shadow:10px 10px 0 #000
+}
+.hud{display:grid;grid-template-columns:repeat(6,1fr);gap:7px;margin-bottom:8px}
+.hudItem{background:var(--panel2);border:3px solid #fff;box-shadow:4px 4px 0 #000;padding:7px;text-align:center;min-width:0}
+.hudItem small{display:block;color:var(--muted);font-size:9px;white-space:nowrap}
+.hudItem strong{font-size:16px}
+.canvasWrap{position:relative}
+canvas{
+  width:100%;height:auto;display:block;border:4px solid white;box-shadow:7px 7px 0 #000;
+  image-rendering:pixelated;background:#66c7ff
+}
+#regionBadge{
+  position:absolute;left:11px;top:11px;background:rgba(0,0,0,.72);border:2px solid white;
+  padding:5px 8px;font-size:11px;font-weight:bold
+}
+#questionTimer{
+  position:absolute;right:11px;top:11px;background:rgba(0,0,0,.72);border:2px solid white;
+  padding:5px 8px;font-size:11px;font-weight:bold;color:var(--gold)
+}
+.quiz{padding:13px;margin-top:9px}
+.qtop{display:flex;justify-content:space-between;gap:8px;align-items:center;flex-wrap:wrap}
+#questionText{font-size:clamp(16px,2.2vw,22px);line-height:1.3;margin:10px 0}
+.answers{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.answer{
+  border:3px solid #fff;background:#293052;color:#fff;padding:11px;min-height:56px;text-align:left;
+  box-shadow:4px 4px 0 #000;cursor:pointer
+}
+.answer.correct{background:#176a43}.answer.wrong{background:#7b2536}
+.answer .key{color:var(--gold);font-weight:bold;margin-right:8px}
+#feedback{min-height:22px;font-size:13px;font-weight:bold}.good{color:var(--good)}.bad{color:var(--bad)}
+.progressBox{padding:9px 11px;margin-top:9px}
+.progress{height:24px;border:3px solid #fff;background:#0b0e19;position:relative;overflow:hidden}
+#progressFill{height:100%;width:0;background:linear-gradient(90deg,#44ddff,#65ef99,#ffd84d)}
+.finishFlag{position:absolute;right:2px;top:-5px;font-size:22px}.progressTxt{text-align:center;margin-top:4px;font-size:11px}
+#waitingScreen canvas,#presenterScreen canvas{max-height:58vh;object-fit:contain}
+.waitCard{margin-top:10px;padding:13px;text-align:center}
+.waitBig{font-size:clamp(20px,4vw,34px);font-weight:bold;color:var(--gold);margin-bottom:5px}
+#presenterControls{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin:10px 0}
+.presenterGrid{display:grid;grid-template-columns:1.35fr .65fr;gap:10px}
+.sideCard{padding:12px}
+.sideCard h3{margin:0 0 8px;color:var(--gold);font-size:15px}
+#playerList,#rankingList{display:grid;gap:6px;max-height:240px;overflow:auto}
+.row{
+  display:flex;justify-content:space-between;gap:8px;align-items:center;padding:7px 8px;
+  background:#202644;border:2px solid #4e567c;font-size:12px
+}
+.bigStat{font-size:30px;font-weight:bold;color:var(--cyan)}
+.presenterBottom{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:10px}
+.miniStat{padding:10px;text-align:center;background:#202644;border:3px solid white}
+.miniStat small{display:block;color:var(--muted);font-size:9px}
+#pinGate{
+  position:fixed;inset:0;z-index:120;background:#0b0d19;display:grid;place-items:center;padding:20px
+}
+.pinCard{width:min(420px,94vw);padding:18px;text-align:center}
+.pinInput{width:150px;font-size:28px;letter-spacing:.25em;text-align:center;padding:10px;background:#0d1020;color:white;border:4px solid white}
+#finalScreen .stats{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;max-width:760px;margin:18px auto}
+.stat{padding:12px;background:var(--panel2);border:3px solid white;box-shadow:4px 4px 0 #000}
+.stat small{display:block;color:var(--muted)}.stat strong{font-size:22px}
+#orientationHint{
+  display:none;position:fixed;left:50%;bottom:max(10px,env(safe-area-inset-bottom));transform:translateX(-50%);
+  z-index:90;background:#12162a;border:3px solid white;padding:8px 10px;width:min(92vw,440px);text-align:center;font-size:11px
+}
+@media(max-width:760px){
+  .screen{padding:11px}.hud{grid-template-columns:repeat(3,1fr)}
+  .answers{grid-template-columns:1fr}.presenterGrid{grid-template-columns:1fr}
+  .presenterBottom{grid-template-columns:1fr 1fr 1fr}
+  canvas{max-height:34vh;object-fit:contain}
+  #finalScreen .stats{grid-template-columns:1fr}
+}
+@media(max-width:430px){
+  .title{font-size:37px}.hud{grid-template-columns:repeat(2,1fr)}
+  .answers{grid-template-columns:1fr}.answer{font-size:14px;min-height:52px}
+  .presenterBottom{grid-template-columns:1fr}.bigStat{font-size:24px}
+}
+@media(orientation:landscape) and (max-height:520px){
+  body{padding:4px}.hud{grid-template-columns:repeat(6,1fr)}.hudItem{padding:3px}
+  .hudItem small{font-size:7px}.hudItem strong{font-size:12px}
+  canvas{max-height:42vh}.quiz{padding:7px}.answers{grid-template-columns:1fr 1fr}
+  .answer{min-height:40px;padding:7px;font-size:12px}#questionText{font-size:13px;margin:5px 0}
+}
+</style>
 </head>
-<body class="player-page">
-  <main id="participantApp" class="container">
-    <div class="brand">
-      <div><div class="eyebrow">QUIZ INTERATIVO</div><h1>Heranças, desigualdade e ITCMD</h1></div>
-      <span class="badge" id="modeBadge">Modo demonstração</span>
+<body>
+<div id="app">
+
+<section id="joinScreen" class="screen pixel">
+  <div class="kicker">HERANÇA • DESIGUALDADE • TRIBUTAÇÃO</div>
+  <h1 class="title">QUIZ RUNNER</h1>
+  <div class="subtitle">Heranças & ITCMD — Pixel Race</div>
+  <div class="joinRow">
+    <input id="initialsInput" class="initials" maxlength="2" autocomplete="off" placeholder="RM" aria-label="Duas iniciais">
+    <button id="joinBtn" class="btn">▶ ENTRAR NA CORRIDA</button>
+  </div>
+  <div class="instructions">
+    <p>• O personagem corre automaticamente.</p>
+    <p>• Respostas certas aumentam a velocidade e criam combo.</p>
+    <p>• Respostas erradas reduzem temporariamente a velocidade.</p>
+    <p>• Cada pergunta tem tempo limitado para manter a partida abaixo de 3 minutos.</p>
+    <p>• O objetivo é responder o quiz e alcançar a bandeira final.</p>
+  </div>
+  <div class="footer">© 2026 Rodolpho Moraes</div>
+</section>
+
+<section id="waitingScreen" class="hidden">
+  <canvas id="waitingCanvas" width="960" height="400"></canvas>
+  <div class="waitCard pixel">
+    <div class="waitBig">VOCÊ ESTÁ NA LARGADA!</div>
+    <div id="waitingPlayer">Jogador --</div>
+    <div id="readyCount">Aguardando os demais corredores...</div>
+    <div class="note" style="margin-top:7px">O treinador dará a largada quando todos estiverem prontos.</div>
+  </div>
+</section>
+
+<div id="countdown" class="hidden">3</div>
+<div id="orientationHint">📱 Para uma experiência melhor, vire o celular na horizontal.</div>
+
+<section id="gameScreen" class="hidden">
+  <div class="hud">
+    <div class="hudItem"><small>JOGADOR</small><strong id="playerHud">--</strong></div>
+    <div class="hudItem"><small>ACERTOS</small><strong id="hitsHud">0/10</strong></div>
+    <div class="hudItem"><small>COMBO</small><strong id="comboHud">x0</strong></div>
+    <div class="hudItem"><small>VELOCIDADE</small><strong id="speedHud">1.0x</strong></div>
+    <div class="hudItem"><small>PONTUAÇÃO</small><strong id="scoreHud">0</strong></div>
+    <div class="hudItem"><small>TEMA</small><strong id="regionHud">Patrimônio</strong></div>
+  </div>
+  <div class="canvasWrap">
+    <canvas id="gameCanvas" width="960" height="400"></canvas>
+    <div id="regionBadge">PATRIMÔNIO</div>
+    <div id="questionTimer">15s</div>
+  </div>
+  <div class="quiz pixel">
+    <div class="qtop"><strong id="questionCounter">PERGUNTA 1/10</strong><span id="feedback"></span></div>
+    <div id="questionText"></div>
+    <div id="answers" class="answers"></div>
+  </div>
+  <div class="progressBox pixel">
+    <div class="progress"><div id="progressFill"></div><div class="finishFlag">🏁</div></div>
+    <div id="progressText" class="progressTxt">0%</div>
+  </div>
+</section>
+
+<section id="finalScreen" class="screen pixel hidden">
+  <h1 class="title" style="font-size:clamp(28px,6vw,54px)">🏆 CORRIDA CONCLUÍDA</h1>
+  <div class="subtitle">Heranças & ITCMD</div>
+  <div class="stats">
+    <div class="stat"><small>ACERTOS</small><strong id="finalHits"></strong></div>
+    <div class="stat"><small>APROVEITAMENTO</small><strong id="finalPercent"></strong></div>
+    <div class="stat"><small>TEMPO TOTAL</small><strong id="finalTime"></strong></div>
+    <div class="stat"><small>MELHOR COMBO</small><strong id="finalCombo"></strong></div>
+    <div class="stat"><small>VELOCIDADE MÁXIMA</small><strong id="finalSpeed"></strong></div>
+    <div class="stat"><small>PONTUAÇÃO FINAL</small><strong id="finalScore"></strong></div>
+  </div>
+  <div class="center"><button id="playAgainBtn" class="btn">↻ JOGAR NOVAMENTE</button></div>
+  <div class="footer">© 2026 Rodolpho Moraes</div>
+</section>
+
+<section id="presenterScreen" class="hidden">
+  <div class="kicker">MODO APRESENTADOR</div>
+  <h1 class="title" style="font-size:clamp(28px,5vw,52px)">PIXEL COACH</h1>
+  <div class="subtitle">Heranças & ITCMD</div>
+  <div id="presenterControls">
+    <button id="startRaceBtn" class="btn">▶ INICIAR PARTIDA</button>
+    <button id="newRaceBtn" class="btn secondary">↻ NOVA PARTIDA</button>
+    <button id="fullscreenBtn" class="btn secondary">⛶ TELA CHEIA</button>
+  </div>
+  <div class="presenterGrid">
+    <div>
+      <canvas id="presenterCanvas" width="960" height="470"></canvas>
+      <div class="presenterBottom">
+        <div class="miniStat"><small>JOGADORES</small><strong id="presenterPlayers" class="bigStat">0</strong></div>
+        <div class="miniStat"><small>RESPOSTAS RECEBIDAS</small><strong id="presenterAnswered" class="bigStat">0/0</strong></div>
+        <div class="miniStat"><small>PERGUNTA</small><strong id="presenterQuestion" class="bigStat">—</strong></div>
+      </div>
     </div>
-
-    <section id="joinScreen" class="card center join-card">
-      <div class="hero-icon">🏃🏾‍➡️</div>
-      <h2>Entre na corrida!</h2>
-      <p class="subtitle">Escolha duas iniciais. Você avança uma etapa a cada pergunta respondida.</p>
-      <div class="initials"><input id="initials" maxlength="2" autocomplete="off" placeholder="RM" aria-label="Duas iniciais" /><button id="joinBtn">ENTRAR NA CORRIDA</button></div>
-      <div class="join-notes"><span>📱 Sem aplicativo</span><span>⚡ Atualização ao vivo</span><span>🏁 6 etapas</span></div>
-      <button id="soundToggleJoin" class="sound-toggle" type="button">🔊 Som ligado</button>
-    </section>
-
-    <section id="waitingScreen" class="card center hidden waiting-card">
-      <div class="hero-icon">🏃🏾‍➡️</div>
-      <h2>Você está na largada!</h2>
-      <p class="subtitle">Aguarde o apresentador clicar em <strong>Iniciar partida</strong>.</p>
-      <div id="readyCount" class="ready-count">1 jogador pronto</div>
-      <div class="waiting-player"><span>Seu corredor:</span><strong id="waitingInitials">--</strong></div>
-      <div class="waiting-pulse"><span></span><span></span><span></span></div>
-    </section>
-
-    <section id="quizScreen" class="card hidden">
-      <div class="topbar">
-        <span class="player-chip">🏃🏾‍➡️ <strong id="playerName">RM</strong></span>
-        <div class="progress"><div id="progressBar"></div></div>
-        <span class="question-chip" id="questionCounter">1 / 6</span><button id="soundToggleQuiz" class="sound-toggle compact" type="button">🔊</button>
+    <div>
+      <div class="sideCard pixel">
+        <h3>NA LARGADA / CORRENDO</h3>
+        <div id="playerList"></div>
       </div>
-      <div id="questionText" class="question"></div>
-      <div id="options" class="options"></div>
-      <div id="feedback" class="feedback hidden"></div>
-      <div class="action-row"><button id="nextBtn" class="hidden">PRÓXIMA</button></div>
-      <div class="race-wrap personal-race">
-        <div class="race-title"><span>🚦 LARGADA</span><span id="personalScore">0 acertos</span><span>CHEGADA 🏁</span></div>
-        <div class="track" id="track">
-          <div class="track-markers" id="trackMarkers"></div>
-          <div class="runner emoji-runner" id="runner"><span class="runner-emoji" aria-hidden="true">🏃🏾‍➡️</span><span class="runner-label" id="runnerLabel"></span></div>
-        </div>
+      <div class="sideCard pixel" style="margin-top:10px">
+        <h3>RANKING AO VIVO</h3>
+        <div id="rankingList"></div>
       </div>
+    </div>
+  </div>
+  <div class="footer">© 2026 Rodolpho Moraes</div>
+</section>
+</div>
 
-      <section class="players-now">
-        <div class="players-now-heading"><strong>👥 Quem está correndo</strong><span id="playersNowCount">0 online</span></div>
-        <div id="playersNow" class="players-now-list"><span class="mini">Aguardando participantes...</span></div>
-      </section>
-    </section>
+<div id="pinGate" class="hidden">
+  <div class="pinCard pixel">
+    <div class="kicker">ACESSO DO APRESENTADOR</div>
+    <h2>Digite o PIN</h2>
+    <input id="pinInput" class="pinInput" inputmode="numeric" maxlength="4" type="password">
+    <div style="margin-top:12px"><button id="pinBtn" class="btn">ENTRAR</button></div>
+    <div id="pinError" class="bad" style="margin-top:10px"></div>
+  </div>
+</div>
 
-    <section id="finishScreen" class="card center hidden finish-card">
-      <div class="hero-icon">🏁</div>
-      <h2>Parabéns, você é um amigo</h2>
-      <div class="finish-score"><span id="scoreFinal">0</span>/<span id="scoreTotal">6</span></div>
-      <p id="finishText" class="subtitle"></p>
-      <button id="restartBtn">JOGAR NOVAMENTE</button>
-    </section>
-    <div id="confettiLayer" class="confetti-layer" aria-hidden="true"></div>
-  </main>
+<script>
+/* =========================================================
+   PARA TROCAR AS PERGUNTAS, EDITE SOMENTE ESTE BLOCO.
+   correct: 0=A, 1=B, 2=C, 3=D
+   ========================================================= */
+const questions = [
+  {question:"Em 2019, qual parcela da renda total estava concentrada no 1% de maior renda, segundo o estudo?",answers:["35,3%","15,0%","80,9%","25,5%"],correct:3},
+  {question:"Em 2019, qual parcela da riqueza total estava concentrada no 1% de maior renda, segundo o estudo?",answers:["62,6%","25,5%","35,3%","80,9%"],correct:3},
+  {question:"Em 2019, qual parcela do valor das heranças foi recebida pelo 1% de maior renda?",answers:["35,3%","25,5%","62,6%","80,9%"],correct:0},
+  {question:"Qual é a alíquota máxima nacional do ITCMD considerada no estudo?",answers:["4%","8%","6%","10%"],correct:1},
+  {question:"No levantamento de 2026 utilizado no fichamento, quantas das 27 UFs possuem estrutura progressiva de ITCMD?",answers:["27","10","17","20"],correct:2},
+  {question:"Entre 1976 e 2015, qual grupo apresentou menor número médio de filhos?",answers:["Os dois grupos tiveram a mesma média","Os 5% mais ricos","O estudo não comparou fecundidade","Os 40% mais pobres"],correct:1},
+  {question:"Qual era a média de filhos entre os 5% mais ricos no período analisado?",answers:["3,2 filhos","2,3 filhos","4,0 filhos","1,5 filho"],correct:1},
+  {question:"No cenário 3 de 2019, quanto das heranças foi recebido pelos 0,1% de maior renda?",answers:["35,3%","19,9%","62,6%","5,1%"],correct:2},
+  {question:"Qual grupo recebeu apenas 5,1% das heranças no cenário 3 de 2019?",answers:["Os 10% mais ricos","Os 50% mais ricos","Os 0,1% mais ricos","Os 91% mais pobres"],correct:3},
+  {question:"Qual frase resume melhor o tripé destacado no estudo?",answers:["Renda igual + menos filhos entre os pobres + ausência de heranças","Capital concentrado + menos filhos entre os ricos + baixa tributação das heranças","Capital disperso + fecundidade igual + tributação uniforme","Capital disperso + mais filhos entre os ricos + alta tributação das heranças"],correct:1}
+];
 
-  <main id="presenterAuth" class="container hidden presenter-auth-shell">
-    <section class="card center presenter-auth-card">
-      <div class="hero-icon">🔐</div>
-      <div class="eyebrow">ACESSO DO APRESENTADOR</div>
-      <h1>Modo apresentador</h1>
-      <p class="subtitle">Digite o PIN de 4 dígitos para acessar os controles da partida.</p>
-      <div class="presenter-pin-row">
-        <input id="presenterPin" type="password" inputmode="numeric" maxlength="4" autocomplete="off" placeholder="••••" aria-label="PIN do apresentador">
-        <button id="presenterLoginBtn">ENTRAR</button>
-      </div>
-      <p id="presenterPinError" class="pin-error hidden">PIN incorreto.</p>
-      <a class="back-to-game" href="index.html">Voltar para o jogo</a>
-    </section>
-  </main>
+/* Multiplayer sem biblioteca externa: Firebase Realtime Database via REST */
+const DB_BASE = "https://quiz-herancas-itcmd-default-rtdb.firebaseio.com";
+const ROOT = "pixelRaceITCMD";
+const PRESENTER_PIN = "1234";
+const MAX_QUESTION_SECONDS = 15;
+const WORLD_LENGTH = 6600;
 
-  <main id="presenterApp" class="container wide hidden presenter-shell">
-    <div class="race-copyright">© 2026 Rodolpho Moraes</div>
-    <header class="race-hero presenter-top">
-      <div>
-        <div class="eyebrow">MODO APRESENTADOR • QUIZ AO VIVO</div>
-        <h1>Heranças, desigualdade e ITCMD</h1>
-      </div>
-      <div class="presenter-actions">
-        <button id="startGameBtn" class="soft-btn primary">Iniciar partida</button>
-        <button id="fullscreenBtn" class="soft-btn">Tela cheia</button>
-        <button id="resetGameBtn" class="soft-btn danger">Nova Partida</button>
-      </div>
-    </header>
+const $ = id => document.getElementById(id);
+const presenterMode = new URLSearchParams(location.search).get("modo")==="apresentador";
+const uid = (()=>{let v=sessionStorage.getItem("pixelRaceUid");if(!v){v="p_"+Date.now()+"_"+Math.random().toString(36).slice(2,8);sessionStorage.setItem("pixelRaceUid",v)}return v})();
+let initials = (sessionStorage.getItem("pixelRaceInitials")||"").toUpperCase();
+let game = null, playerState = null, raf=0, lastFrame=0, syncTimer=0, questionTimer=0, secondsLeft=MAX_QUESTION_SECONDS;
+let allPlayers = {}, presenterPoll=0, localSessionId=null;
 
-    <section class="scoreboard card">
-      <div class="scoreboard-item"><span>👥</span><div><strong id="onlineCount">0</strong><small>jogadores online</small></div></div>
-      <div class="scoreboard-item"><span>🏁</span><div><strong id="finishedCount">0</strong><small>finalizaram</small></div></div>
-      <div class="scoreboard-item"><span>❓</span><div><strong id="totalQuestions">6</strong><small>perguntas</small></div></div>
-    </section>
+async function dbGet(path){
+  try{const r=await fetch(`${DB_BASE}/${ROOT}/${path}.json?ts=${Date.now()}`,{cache:"no-store"});return await r.json()}catch(e){return null}
+}
+async function dbSet(path,val){
+  try{await fetch(`${DB_BASE}/${ROOT}/${path}.json`,{method:"PUT",headers:{"Content-Type":"application/json"},body:JSON.stringify(val)});return true}catch(e){return false}
+}
+async function dbPatch(path,val){
+  try{await fetch(`${DB_BASE}/${ROOT}/${path}.json`,{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify(val)});return true}catch(e){return false}
+}
+async function dbDelete(path){
+  try{await fetch(`${DB_BASE}/${ROOT}/${path}.json`,{method:"DELETE"});return true}catch(e){return false}
+}
 
-    <section class="card presenter-roster-card">
-      <div class="players-now-heading"><strong>👀 Quem está jogando agora</strong><span id="status" class="mini">Aguardando Firebase</span></div>
-      <div id="presenterRoster" class="players-now-list"><span class="mini">Aguardando participantes...</span></div>
-    </section>
+function freshPlayer(){
+  return {initials,joinedAt:Date.now(),ready:true,hits:0,combo:0,bestCombo:0,score:0,progress:0,speed:1,qIndex:0,answeredCount:0,finished:false,finishedAt:null};
+}
+function freshGame(){
+  return {status:"lobby",sessionId:"s_"+Date.now(),startAt:null,createdAt:Date.now()};
+}
 
+/* ---------- PIXEL DRAW HELPERS ---------- */
+function rect(ctx,x,y,w,h,c){ctx.fillStyle=c;ctx.fillRect(Math.round(x),Math.round(y),Math.round(w),Math.round(h))}
+function checkerFlag(ctx,x,g,s=1){
+  rect(ctx,x,g-84*s,5*s,84*s,"#eee");
+  for(let r=0;r<4;r++)for(let c=0;c<4;c++)rect(ctx,x+5*s+c*10*s,g-84*s+r*10*s,10*s,10*s,(r+c)%2?"#111":"#fff");
+}
+function runner(ctx,x,y,phase=0,scale=1,shirt="#315ad6"){
+  const b=phase?1:-1;
+  rect(ctx,x+8*scale,y+(2+b)*scale,10*scale,10*scale,"#e8a16c");
+  rect(ctx,x+8*scale,y+(13+b)*scale,10*scale,18*scale,shirt);
+  if(phase){rect(ctx,x+2*scale,y+(16+b)*scale,8*scale,5*scale,"#e8a16c");rect(ctx,x+18*scale,y+(22+b)*scale,8*scale,5*scale,"#e8a16c")}
+  else{rect(ctx,x+1*scale,y+(23+b)*scale,8*scale,5*scale,"#e8a16c");rect(ctx,x+18*scale,y+(15+b)*scale,8*scale,5*scale,"#e8a16c")}
+  if(phase){rect(ctx,x+6*scale,y+(31+b)*scale,6*scale,15*scale,"#202233");rect(ctx,x+14*scale,y+(31+b)*scale,6*scale,10*scale,"#202233")}
+  else{rect(ctx,x+7*scale,y+(31+b)*scale,6*scale,10*scale,"#202233");rect(ctx,x+15*scale,y+(31+b)*scale,6*scale,15*scale,"#202233")}
+}
+function coach(ctx,x,y,wave=false,scale=1){
+  rect(ctx,x+9*scale,y,13*scale,13*scale,"#e9a56e"); // cabeça
+  rect(ctx,x+8*scale,y+13*scale,15*scale,25*scale,"#7a4fd1"); // camisa
+  rect(ctx,x+7*scale,y+38*scale,6*scale,18*scale,"#22263b");
+  rect(ctx,x+18*scale,y+38*scale,6*scale,18*scale,"#22263b");
+  rect(ctx,x+5*scale,y+5*scale,7*scale,3*scale,"#202020"); // óculos
+  rect(ctx,x+18*scale,y+5*scale,7*scale,3*scale,"#202020");
+  if(wave){rect(ctx,x+22*scale,y+15*scale,5*scale,18*scale,"#e9a56e");rect(ctx,x+25*scale,y+8*scale,5*scale,10*scale,"#e9a56e")}
+  else{rect(ctx,x+2*scale,y+17*scale,8*scale,5*scale,"#e9a56e");rect(ctx,x+23*scale,y+17*scale,8*scale,5*scale,"#e9a56e")}
+  rect(ctx,x+30*scale,y+12*scale,12*scale,16*scale,"#ffd84d"); // prancheta
+}
+function drawThemeObject(ctx,kind,x,g){
+  if(kind==="Patrimônio"){
+    rect(ctx,x,g-58,52,58,"#5267a9");rect(ctx,x+8,g-42,9,10,"#b9e7ff");rect(ctx,x+29,g-42,9,10,"#b9e7ff");
+    rect(ctx,x+19,g-20,13,20,"#253052");rect(ctx,x+61,g-22,24,22,"#d4a62f");rect(ctx,x+64,g-26,18,5,"#ffd84d")
+  }else if(kind==="Heranças"){
+    rect(ctx,x+8,g-50,48,50,"#d18e5a");ctx.fillStyle="#8b4f38";ctx.beginPath();ctx.moveTo(x,g-50);ctx.lineTo(x+32,g-79);ctx.lineTo(x+64,g-50);ctx.fill();
+    rect(ctx,x+27,g-23,12,23,"#684630");rect(ctx,x+72,g-58,8,58,"#6a442c");rect(ctx,x+55,g-82,42,30,"#2d8c52")
+  }else if(kind==="Desigualdade"){
+    rect(ctx,x,g-35,24,35,"#59658b");rect(ctx,x+31,g-70,24,70,"#59658b");rect(ctx,x+62,g-115,24,115,"#59658b");
+    rect(ctx,x+94,g-22,18,22,"#c59b32")
+  }else if(kind==="ITCMD"){
+    rect(ctx,x,g-72,60,72,"#e8e5d7");rect(ctx,x+7,g-63,46,4,"#737373");rect(ctx,x+7,g-51,38,4,"#737373");
+    ctx.fillStyle="#7b4fd4";ctx.font="bold 22px Courier New";ctx.fillText("%",x+19,g-18)
+  }else{
+    rect(ctx,x,g-64,72,64,"#777a8c");rect(ctx,x-8,g-76,88,12,"#999cad");
+    rect(ctx,x+9,g-50,10,50,"#56596b");rect(ctx,x+31,g-50,10,50,"#56596b");rect(ctx,x+53,g-50,10,50,"#56596b")
+  }
+}
+const regions=[
+  {name:"Patrimônio",start:0,end:1320,sky:"#6bc6ff",ground:"#4f7543"},
+  {name:"Heranças",start:1320,end:2640,sky:"#82d9ff",ground:"#8a6746"},
+  {name:"Desigualdade",start:2640,end:3960,sky:"#f1bb67",ground:"#725d49"},
+  {name:"ITCMD",start:3960,end:5280,sky:"#9abddd",ground:"#596b75"},
+  {name:"Equidade",start:5280,end:6600,sky:"#8a7dbb",ground:"#4b4c61"}
+];
+const obstacles=[590,1110,1690,2270,2970,3530,4190,4820,5480,6070];
 
-    <section class="race-stage card">
-      <div class="stage-heading">
-        <div><span class="stage-kicker">CLASSIFICAÇÃO</span><h2>Corrida ao vivo</h2></div>
-        <div class="legend"><span>🚦 Largada</span><span>🏁 Chegada</span></div>
-      </div>
-      <div id="players" class="race-list"></div>
-    </section>
+/* ---------- PARTICIPANT ---------- */
+const gameCanvas=$("gameCanvas"),gctx=gameCanvas.getContext("2d");gctx.imageSmoothingEnabled=false;
+function localPlayerInit(){
+  playerState={
+    x:70,y:282,vx:0,vy:0,grounded:true,
+    hits:0,combo:0,bestCombo:0,score:0,speed:1,maxSpeed:1,
+    qIndex:0,answered:false,answeredCount:0,slowUntil:0,boostUntil:0,
+    startPerf:performance.now(),startWall:Date.now(),finished:false,cameraX:0,particles:[]
+  };
+}
+function currentRegionByX(x){for(const r of regions)if(x>=r.start&&x<r.end)return r;return regions[regions.length-1]}
+function comboSpeed(c){return c>=4?2.5:c===3?2.0:c===2?1.6:c===1?1.3:1.0}
+function effectiveMult(now){
+  let m=comboSpeed(playerState.combo);
+  if(now<playerState.slowUntil)m*=.65;
+  playerState.speed=m;playerState.maxSpeed=Math.max(playerState.maxSpeed,m);return m
+}
+function drawRunnerWorld(now){
+  const p=playerState,reg=currentRegionByX(p.x),ctx=gctx,c=p.cameraX,G=330;
+  ctx.fillStyle=reg.sky;ctx.fillRect(0,0,gameCanvas.width,gameCanvas.height);
+  if(reg.name==="Desigualdade"){rect(ctx,770,58,45,45,"#ffd84d")}
+  else{
+    for(let i=0;i<5;i++){const x=i*230-(c*.18)%1150+40;rect(ctx,x,55+(i%2)*35,58,15,"rgba(255,255,255,.84)");rect(ctx,x+15,45+(i%2)*35,30,12,"rgba(255,255,255,.84)")}
+  }
+  rect(ctx,0,G,gameCanvas.width,70,reg.ground);rect(ctx,0,G,gameCanvas.width,7,"#292c37");
+  const start=Math.floor(c/210)*210-210;
+  for(let wx=start;wx<c+gameCanvas.width+220;wx+=210){const rr=currentRegionByX(Math.max(0,wx));drawThemeObject(ctx,rr.name,wx-c,G)}
+  checkerFlag(ctx,20-c,G,.9);checkerFlag(ctx,WORLD_LENGTH-c-50,G,.9);
+  obstacles.forEach(o=>{if(o>c-40&&o<c+gameCanvas.width+40){rect(ctx,o-c,G-18,22,18,"#5f412c");rect(ctx,o-c+4,G-24,14,6,"#845d3f")}});
+  p.particles.forEach(pt=>rect(ctx,pt.x-c,pt.y,4,4,"rgba(235,224,185,.8)"));
+  runner(ctx,p.x-c,p.y,Math.floor(now/105)%2,1,"#315ad6");
+}
+function updateParticipant(dt,now){
+  const p=playerState,m=effectiveMult(now),base=48;
+  p.vx=base*m;p.x+=p.vx*dt;
+  const next=obstacles.find(x=>x>p.x&&x-p.x<80);
+  if(next&&p.grounded){p.vy=-370;p.grounded=false}
+  p.vy+=970*dt;p.y+=p.vy*dt;
+  if(p.y>=282){p.y=282;p.vy=0;p.grounded=true}
+  if(p.vx>85&&Math.random()<.35)p.particles.push({x:p.x-5,y:p.y+44,vx:-40-Math.random()*55,vy:-15,life:.45});
+  p.particles.forEach(pt=>{pt.x+=pt.vx*dt;pt.y+=pt.vy*dt;pt.life-=dt});p.particles=p.particles.filter(pt=>pt.life>0);
+  p.cameraX=Math.max(0,Math.min(WORLD_LENGTH-gameCanvas.width,p.x-250));
+  if(p.x>=WORLD_LENGTH-35 && !p.finished)finishParticipant();
+  updateParticipantHud();
+}
+function updateParticipantHud(){
+  const p=playerState,reg=currentRegionByX(p.x),pct=Math.min(100,p.x/WORLD_LENGTH*100);
+  $("playerHud").textContent=initials;$("hitsHud").textContent=p.hits+"/"+questions.length;$("comboHud").textContent="x"+p.combo;
+  $("speedHud").textContent=p.speed.toFixed(1)+"x";$("scoreHud").textContent=p.score;$("regionHud").textContent=reg.name;
+  $("regionBadge").textContent=reg.name.toUpperCase();$("progressFill").style.width=pct+"%";$("progressText").textContent=Math.floor(pct)+"%";
+}
+function participantLoop(now){
+  if(!playerState||playerState.finished)return;
+  const dt=Math.min(.033,(now-lastFrame)/1000||0);lastFrame=now;updateParticipant(dt,now);drawRunnerWorld(now);
+  raf=requestAnimationFrame(participantLoop)
+}
+function loadQuestion(){
+  clearInterval(questionTimer);
+  if(playerState.qIndex>=questions.length){
+    $("questionCounter").textContent="QUIZ CONCLUÍDO";$("questionText").textContent="Todas as respostas registradas. Sprint final até a bandeira!";
+    $("answers").innerHTML="";$("feedback").textContent="";$("questionTimer").textContent="—";return;
+  }
+  playerState.answered=false;secondsLeft=MAX_QUESTION_SECONDS;$("questionTimer").textContent=secondsLeft+"s";
+  $("feedback").textContent="";$("feedback").className="";
+  const q=questions[playerState.qIndex];$("questionCounter").textContent="PERGUNTA "+(playerState.qIndex+1)+"/"+questions.length;$("questionText").textContent=q.question;$("answers").innerHTML="";
+  ["A","B","C","D"].forEach((k,i)=>{const b=document.createElement("button");b.className="answer";b.innerHTML='<span class="key">'+k+"</span>"+q.answers[i];b.onclick=()=>answerQuestion(i,b);$("answers").appendChild(b)});
+  questionTimer=setInterval(()=>{secondsLeft--;$("questionTimer").textContent=secondsLeft+"s";if(secondsLeft<=0){clearInterval(questionTimer);answerQuestion(-1,null)}},1000);
+}
+async function answerQuestion(index,button){
+  if(playerState.answered||playerState.qIndex>=questions.length)return;
+  playerState.answered=true;clearInterval(questionTimer);
+  const q=questions[playerState.qIndex],buttons=Array.from($("answers").children);
+  buttons.forEach(b=>b.disabled=true);buttons[q.correct].classList.add("correct");
+  const now=performance.now(),isCorrect=index===q.correct;
+  if(isCorrect){
+    playerState.hits++;playerState.combo++;playerState.bestCombo=Math.max(playerState.bestCombo,playerState.combo);
+    playerState.score+=100+playerState.combo*25;playerState.boostUntil=now+3200;if(button)button.classList.add("correct");
+    $("feedback").textContent=playerState.combo>1?"✓ CERTO! COMBO x"+playerState.combo:"✓ CERTO!";$("feedback").className="good";
+  }else{
+    playerState.combo=0;playerState.slowUntil=now+2200;playerState.score=Math.max(0,playerState.score-25);
+    if(button)button.classList.add("wrong");$("feedback").textContent=index===-1?"✕ TEMPO ESGOTADO":"✕ RESPOSTA INCORRETA";$("feedback").className="bad";
+  }
+  playerState.answeredCount++;
+  await syncPlayer({hits:playerState.hits,combo:playerState.combo,bestCombo:playerState.bestCombo,score:playerState.score,qIndex:playerState.qIndex+1,answeredCount:playerState.answeredCount,lastAnswer:index,lastAnswerCorrect:isCorrect,lastAnsweredAt:Date.now(),speed:playerState.speed,progress:playerState.x/WORLD_LENGTH});
+  setTimeout(()=>{playerState.qIndex++;loadQuestion()},900);
+}
+async function syncPlayer(extra={}){
+  if(!localSessionId)return;
+  const data=Object.assign({initials,progress:playerState?playerState.x/WORLD_LENGTH:0,speed:playerState?playerState.speed:1,updatedAt:Date.now()},extra);
+  dbPatch(`sessions/${localSessionId}/players/${uid}`,data)
+}
+function startSyncLoop(){clearInterval(syncTimer);syncTimer=setInterval(()=>{if(playerState&&!playerState.finished)syncPlayer()},1000)}
+async function finishParticipant(){
+  playerState.finished=true;cancelAnimationFrame(raf);clearInterval(questionTimer);clearInterval(syncTimer);
+  const elapsed=(performance.now()-playerState.startPerf)/1000;
+  await syncPlayer({finished:true,finishedAt:Date.now(),progress:1,elapsed:elapsed,hits:playerState.hits,score:playerState.score,bestCombo:playerState.bestCombo,maxSpeed:playerState.maxSpeed});
+  $("gameScreen").classList.add("hidden");$("finalScreen").classList.remove("hidden");
+  $("finalHits").textContent=playerState.hits+"/"+questions.length;$("finalPercent").textContent=Math.round(playerState.hits/questions.length*100)+"%";
+  $("finalTime").textContent=elapsed.toFixed(1)+" s";$("finalCombo").textContent="x"+playerState.bestCombo;$("finalSpeed").textContent=playerState.maxSpeed.toFixed(1)+"x";$("finalScore").textContent=playerState.score;
+}
+function maybeOrientation(){if(innerWidth<=760&&innerHeight>innerWidth){$("orientationHint").style.display="block";setTimeout(()=>$("orientationHint").style.display="none",3300)}}
+async function runCountdown(startAt){
+  $("waitingScreen").classList.add("hidden");$("countdown").classList.remove("hidden");
+  function paint(){
+    const left=startAt-Date.now();
+    if(left>3000)$("countdown").textContent="3";
+    else if(left>2000)$("countdown").textContent="2";
+    else if(left>1000)$("countdown").textContent="1";
+    else if(left>0)$("countdown").textContent="GO!";
+    else{
+      $("countdown").classList.add("hidden");$("gameScreen").classList.remove("hidden");localPlayerInit();loadQuestion();maybeOrientation();lastFrame=performance.now();requestAnimationFrame(participantLoop);startSyncLoop();return;
+    }
+    requestAnimationFrame(paint)
+  }paint()
+}
 
-    <section id="podiumSection" class="podium-section card hidden">
-      <div class="stage-heading"><div><span class="stage-kicker">DESTAQUES</span><h2 id="podiumTitle">Pódio provisório</h2></div></div>
-      <div id="podium" class="podium"></div>
-    </section>
+/* waiting pixel scene */
+const wcan=$("waitingCanvas"),wctx=wcan.getContext("2d");
+function drawWaiting(t=0){
+  const ctx=wctx,G=325;ctx.fillStyle="#76cfff";ctx.fillRect(0,0,wcan.width,wcan.height);
+  rect(ctx,0,G,wcan.width,75,"#4d7543");rect(ctx,0,G,wcan.width,7,"#292c37");
+  for(let i=0;i<6;i++)drawThemeObject(ctx,"Patrimônio",70+i*165,G);
+  checkerFlag(ctx,70,G,1);coach(ctx,125,245,Math.floor(t/500)%2,1.15);runner(ctx,260,278,Math.floor(t/130)%2,1.05,"#315ad6");
+  ctx.fillStyle="#11182d";ctx.fillRect(470,60,400,110);ctx.strokeStyle="#fff";ctx.lineWidth=4;ctx.strokeRect(470,60,400,110);
+  ctx.fillStyle="#ffd84d";ctx.font="bold 22px Courier New";ctx.fillText("AGUARDE A LARGADA",505,105);
+  ctx.fillStyle="#fff";ctx.font="16px Courier New";ctx.fillText("O treinador está organizando a corrida.",490,140);
+}
+let waitAnim=0;function waitingAnim(t){if(!$("waitingScreen").classList.contains("hidden")){drawWaiting(t);waitAnim=requestAnimationFrame(waitingAnim)}}
 
-    <section id="accuracySection" class="accuracy-section card hidden">
-      <div class="stage-heading">
-        <div><span class="stage-kicker">DESEMPENHO</span><h2 id="accuracyTitle">Ranking por acertos</h2></div>
-        <span class="mini">Desempate pelo menor tempo total de conclusão</span>
-      </div>
-      <div id="accuracyList" class="accuracy-list"></div>
-    </section>
+/* participant lobby polling */
+async function joinRace(){
+  const val=$("initialsInput").value.trim().toUpperCase().replace(/[^A-Z0-9]/g,"").slice(0,2);
+  if(val.length<2){$("initialsInput").focus();return}
+  initials=val;sessionStorage.setItem("pixelRaceInitials",initials);
+  let g=await dbGet("game");if(!g||!g.sessionId||g.status==="finished"){g=freshGame();await dbSet("game",g);await dbSet(`sessions/${g.sessionId}`,{createdAt:Date.now(),players:{}})}
+  localSessionId=g.sessionId;await dbSet(`sessions/${localSessionId}/players/${uid}`,freshPlayer());
+  $("joinScreen").classList.add("hidden");$("waitingScreen").classList.remove("hidden");$("waitingPlayer").textContent="Jogador "+initials;waitingAnim(performance.now());pollLobby();
+}
+async function pollLobby(){
+  const poll=async()=>{
+    const g=await dbGet("game"),players=await dbGet(`sessions/${localSessionId}/players`)||{};
+    $("readyCount").textContent=Object.keys(players).length+" corredor(es) na largada";
+    if(g&&g.sessionId===localSessionId&&g.status==="countdown"&&g.startAt){cancelAnimationFrame(waitAnim);runCountdown(g.startAt);return}
+    setTimeout(poll,700)
+  };poll()
+}
 
+/* ---------- PRESENTER ---------- */
+const pcan=$("presenterCanvas"),pctx=pcan.getContext("2d");pctx.imageSmoothingEnabled=false;
+function drawPresenter(t){
+  const ctx=pctx,G=385;ctx.fillStyle="#74cfff";ctx.fillRect(0,0,pcan.width,pcan.height);rect(ctx,0,G,pcan.width,85,"#4c7141");rect(ctx,0,G,pcan.width,7,"#292c37");
+  const g=game||{status:"lobby"};coach(ctx,90,280,Math.floor(t/500)%2,1.35);checkerFlag(ctx,170,G,1);
+  const arr=Object.values(allPlayers||{}).sort((a,b)=>(b.progress||0)-(a.progress||0)).slice(0,10);
+  arr.forEach((p,i)=>{
+    const laneY=160+(i%5)*43;
+    const x=g.status==="lobby"?230+(i%4)*38:220+Math.min(650,(p.progress||0)*650);
+    runner(ctx,x,laneY,Math.floor(t/120+i)%2,.72,i%2?"#d16b4d":"#315ad6");
+    ctx.fillStyle="#111";ctx.font="bold 12px Courier New";ctx.fillText(p.initials||"--",x-1,laneY-5);
+  });
+  ctx.fillStyle="#12182d";ctx.fillRect(520,35,390,90);ctx.strokeStyle="#fff";ctx.lineWidth=4;ctx.strokeRect(520,35,390,90);
+  ctx.fillStyle="#ffd84d";ctx.font="bold 20px Courier New";
+  ctx.fillText(g.status==="lobby"?"CORREDORES NA LARGADA":g.status==="countdown"?"PREPAREM-SE!":"CORRIDA EM ANDAMENTO",545,72);
+  ctx.fillStyle="#fff";ctx.font="14px Courier New";ctx.fillText("O treinador acompanha as respostas.",545,101);
+}
+function presenterAnim(t){if(presenterMode){drawPresenter(t);requestAnimationFrame(presenterAnim)}}
+async function presenterRefresh(){
+  game=await dbGet("game");
+  if(!game){game=freshGame();await dbSet("game",game);await dbSet(`sessions/${game.sessionId}`,{createdAt:Date.now(),players:{}})}
+  allPlayers=await dbGet(`sessions/${game.sessionId}/players`)||{};
+  const arr=Object.entries(allPlayers);
+  $("presenterPlayers").textContent=arr.length;
+  const qMax=arr.length?Math.max(...arr.map(([_,p])=>p.qIndex||0)):0;
+  const answeredCurrent=arr.filter(([_,p])=>(p.qIndex||0)>qMax-1).length;
+  $("presenterAnswered").textContent=answeredCurrent+"/"+arr.length;
+  $("presenterQuestion").textContent=game.status==="lobby"?"—":Math.min(questions.length,Math.max(1,qMax||1))+"/"+questions.length;
+  $("playerList").innerHTML=arr.length?arr.map(([id,p])=>`<div class="row"><strong>${p.initials||"--"}</strong><span>${p.finished?"🏁":game.status==="lobby"?"PRONTO":"Q"+(p.qIndex||0)}</span></div>`).join(""):`<div class="note">Aguardando participantes...</div>`;
+  const rank=arr.sort((a,b)=>{
+    const pa=a[1],pb=b[1];
+    if(pb.finished&&pa.finished)return (pa.finishedAt||0)-(pb.finishedAt||0);
+    if(pb.hits!==pa.hits)return (pb.hits||0)-(pa.hits||0);
+    return (pb.progress||0)-(pa.progress||0)
+  });
+  $("rankingList").innerHTML=rank.length?rank.map(([_,p],i)=>`<div class="row"><strong>${i+1}º ${p.initials||"--"}</strong><span>${p.hits||0} acertos</span></div>`).join(""):`<div class="note">Ranking aparecerá aqui.</div>`;
+}
+async function startPresenterPolling(){await presenterRefresh();clearInterval(presenterPoll);presenterPoll=setInterval(presenterRefresh,900);requestAnimationFrame(presenterAnim)}
+async function presenterStartRace(){
+  await presenterRefresh();if(!game)return;
+  const startAt=Date.now()+4200;await dbPatch("game",{status:"countdown",startAt});setTimeout(()=>dbPatch("game",{status:"running"}),4300)
+}
+async function presenterNewRace(){
+  const g=freshGame();await dbSet("game",g);await dbSet(`sessions/${g.sessionId}`,{createdAt:Date.now(),players:{}});game=g;allPlayers={};presenterRefresh()
+}
 
-    <section id="arrivalSection" class="arrival-section card hidden">
-      <div class="stage-heading">
-        <div><span class="stage-kicker">LINHA DE CHEGADA</span><h2>Ordem de chegada</h2></div>
-        <span class="mini">Quem concluiu o quiz primeiro</span>
-      </div>
-      <div id="arrivalList" class="arrival-list"></div>
-    </section>
+/* ---------- INIT ---------- */
+$("joinBtn").onclick=joinRace;
+$("initialsInput").addEventListener("keydown",e=>{if(e.key==="Enter")joinRace()});
+$("playAgainBtn").onclick=()=>{location.href=location.pathname};
+$("fullscreenBtn").onclick=()=>{if(document.documentElement.requestFullscreen)document.documentElement.requestFullscreen()};
+$("startRaceBtn").onclick=presenterStartRace;$("newRaceBtn").onclick=presenterNewRace;
 
-    <div class="presenter-end-tools-label">Informações complementares</div>
-    <section class="presenter-tools-grid">
-      <div class="card qr-card">
-        <div><span class="stage-kicker">ENTRADA</span><h2>QR Code dos participantes</h2></div>
-        <div id="participantQr" class="qr-box"></div>
-        <div id="participantUrl" class="mini url-mini"></div>
-      </div>
-      <div class="card summary-card">
-        <div><span class="stage-kicker">RESUMO</span><h2>Estatísticas da partida</h2></div>
-        <div class="summary-grid">
-          <div><strong id="summaryPlayers">0</strong><span>participantes</span></div>
-          <div><strong id="summaryAverage">0,0</strong><span>média de acertos</span></div>
-          <div><strong id="summaryBest">—</strong><span>questão mais acertada</span></div>
-          <div><strong id="summaryHardest">—</strong><span>questão mais difícil</span></div>
-        </div>
-      </div>
-    </section>
-
-  </main>
-
-  <div id="countdownOverlay" class="countdown-overlay hidden" aria-live="assertive"><div class="countdown-card"><div class="countdown-kicker">PREPARE-SE</div><div id="countdownNumber" class="countdown-number">3</div><div class="countdown-sub">A corrida vai começar!</div></div></div>
-
-  <script src="questions.js"></script>
-  <script src="firebase-config.js"></script>
-  <script type="module" src="app.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-  <script type="module" src="presenter.js"></script>
+if(presenterMode){
+  $("joinScreen").classList.add("hidden");
+  const ok=sessionStorage.getItem("pixelPresenterAuth")==="1";
+  if(ok){$("presenterScreen").classList.remove("hidden");startPresenterPolling()}
+  else{$("pinGate").classList.remove("hidden")}
+  $("pinBtn").onclick=()=>{
+    if($("pinInput").value===PRESENTER_PIN){sessionStorage.setItem("pixelPresenterAuth","1");$("pinGate").classList.add("hidden");$("presenterScreen").classList.remove("hidden");startPresenterPolling()}
+    else{$("pinError").textContent="PIN incorreto."}
+  };
+}else{
+  if(initials)$("initialsInput").value=initials;
+}
+window.addEventListener("orientationchange",()=>setTimeout(maybeOrientation,250));
+</script>
 </body>
 </html>
