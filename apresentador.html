@@ -3,44 +3,44 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Quiz Heranças — Apresentador Etapa 5</title>
+<title>Quiz Heranças — Apresentador Etapa 6</title>
 <style>
 *{box-sizing:border-box}
 body{margin:0;min-height:100vh;background:#0b1630;color:#fff;font-family:Arial,sans-serif;padding:24px}
-.wrap{width:min(980px,100%);margin:auto}
+.wrap{width:min(1100px,100%);margin:auto}
 .panel{background:#172440;border:2px solid #fff;padding:22px}
 h1{margin:0 0 8px}
-.meta{color:#c8d1e6;margin-bottom:18px}
-.count{font-size:20px;font-weight:700;margin-bottom:12px}
+.meta{color:#c8d1e6;margin-bottom:14px}
+button{padding:10px 16px;font-weight:800;border:0;background:#ffd34d;color:#111;cursor:pointer;margin-bottom:14px}
+.count{font-size:20px;font-weight:800;margin-bottom:12px}
 .list{display:grid;gap:8px}
-.player{display:grid;grid-template-columns:1fr auto auto;gap:14px;align-items:center;background:#0f1a33;border:1px solid #607399;padding:12px 14px}
-.player strong{font-size:17px}
-.status{font-weight:700}
-.ready{color:#ffd34d}
-.running{color:#63df95}
-.finished{color:#72d8ff}
-.time{font-family:monospace;font-size:16px}
+.player{display:grid;grid-template-columns:minmax(160px,1fr) auto auto auto auto;gap:12px;align-items:center;background:#0f1a33;border:1px solid #607399;padding:11px 13px}
+.player strong{font-size:16px}
+.status{font-weight:800}
+.yellow{color:#ffd34d} .green{color:#63df95} .blue{color:#72d8ff}
+.mono{font-family:monospace}
 .empty{color:#c8d1e6;border:1px dashed #607399;padding:16px}
+.small{font-size:12px;color:#c8d1e6}
 .bad{color:#ff8585}
-.small{font-size:13px;color:#c8d1e6;margin-top:16px}
-button{margin:0 0 16px;padding:10px 16px;font-size:14px;font-weight:700;border:0;cursor:pointer;background:#ffd34d;color:#111}
+@media(max-width:800px){.player{grid-template-columns:1fr 1fr}}
 </style>
 </head>
 <body>
 <main class="wrap">
-  <section class="panel">
-    <h1>Modo apresentador — Etapa 5</h1>
-    <div class="meta">Largada automática e cronômetro individual de 2 minutos</div>
-    <button id="newSessionBtn">NOVA PARTIDA</button>
-    <div id="count" class="count">Jogadores: 0</div>
-    <div id="players" class="list"><div class="empty">Aguardando jogadores...</div></div>
-    <div id="error" class="small"></div>
-  </section>
+<section class="panel">
+  <h1>Modo apresentador — Etapa 6</h1>
+  <div class="meta">8 perguntas • 15 segundos por questão • cronômetro individual de 2 minutos</div>
+  <button id="newSessionBtn">NOVA PARTIDA</button>
+  <div id="count" class="count">Jogadores: 0</div>
+  <div id="players" class="list"><div class="empty">Aguardando jogadores...</div></div>
+  <div id="error" class="small"></div>
+</section>
 </main>
 
 <script>
 const DB_BASE="https://quiz-herancas-itcmd-default-rtdb.firebaseio.com";
 const ROOT="quizHerancasV2";
+const VERSION="v2-stage6";
 const GAME_DURATION=120000;
 let serverTimeOffset=0;
 
@@ -48,125 +48,80 @@ async function syncClock(){
   try{
     const r=await fetch(`${DB_BASE}/.info/serverTimeOffset.json?ts=${Date.now()}`,{cache:"no-store"});
     serverTimeOffset=Number(await r.json())||0;
-  }catch(e){serverTimeOffset=0;}
+  }catch(e){serverTimeOffset=0}
 }
-function now(){return Date.now()+serverTimeOffset;}
+function now(){return Date.now()+serverTimeOffset}
+function makeId(prefix){return `${prefix}_${Math.round(now())}_${Math.random().toString(36).slice(2,8)}`}
 function formatTime(ms){
-  const s=Math.max(0,Math.ceil(ms/1000));
-  return String(Math.floor(s/60)).padStart(2,"0")+":"+String(s%60).padStart(2,"0");
+ const s=Math.max(0,Math.ceil(ms/1000));
+ return String(Math.floor(s/60)).padStart(2,"0")+":"+String(s%60).padStart(2,"0");
 }
+function esc(s){return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#039;"}[c]))}
 async function getJson(path){
-  const r=await fetch(`${DB_BASE}/${ROOT}/${path}.json?ts=${Date.now()}`,{cache:"no-store"});
-  if(!r.ok) throw new Error(`Erro de leitura (${r.status})`);
-  return await r.json();
-}
-async function patchJson(path,value){
-  const r=await fetch(`${DB_BASE}/${ROOT}/${path}.json`,{
-    method:"PATCH",
-    headers:{"Content-Type":"application/json"},
-    body:JSON.stringify(value)
-  });
-  if(!r.ok) throw new Error(`Erro de atualização (${r.status})`);
+ const r=await fetch(`${DB_BASE}/${ROOT}/${path}.json?ts=${Date.now()}`,{cache:"no-store"});
+ if(!r.ok)throw new Error(`Leitura ${r.status}`);
+ return await r.json();
 }
 async function putJson(path,value){
-  const r=await fetch(`${DB_BASE}/${ROOT}/${path}.json`,{
-    method:"PUT",
-    headers:{"Content-Type":"application/json"},
-    body:JSON.stringify(value)
-  });
-  if(!r.ok) throw new Error(`Erro de gravação (${r.status})`);
+ const r=await fetch(`${DB_BASE}/${ROOT}/${path}.json`,{method:"PUT",headers:{"Content-Type":"application/json"},body:JSON.stringify(value)});
+ if(!r.ok)throw new Error(`Gravação ${r.status}`);
 }
-function makeId(prefix){
-  return `${prefix}_${Math.round(now())}_${Math.random().toString(36).slice(2,8)}`;
-}
-function escapeHtml(s){
-  return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#039;"}[c]));
+async function patchJson(path,value){
+ const r=await fetch(`${DB_BASE}/${ROOT}/${path}.json`,{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify(value)});
+ if(!r.ok)throw new Error(`Atualização ${r.status}`);
 }
 async function newSession(){
-  try{
-    await syncClock();
-    const sessionId=makeId("session");
-    const game={
-      version:"v2-stage5",
-      sessionId,
-      status:"lobby",
-      createdAt:now()
-    };
-    await putJson("game",game);
-    await putJson(`sessions/${sessionId}`,{
-      createdAt:now(),
-      status:"lobby"
-    });
-    await refresh();
-  }catch(err){
-    document.getElementById("error").textContent="Erro ao criar nova partida: "+err.message;
-    document.getElementById("error").className="small bad";
-  }
+ await syncClock();
+ const sessionId=makeId("session");
+ await putJson("game",{version:VERSION,sessionId,status:"lobby",createdAt:now()});
+ await putJson(`sessions/${sessionId}`,{createdAt:now(),status:"lobby"});
+ refresh();
 }
-
 async function refresh(){
-  try{
-    const game=await getJson("game");
-    if(!game||!game.sessionId){
-      document.getElementById("count").textContent="Jogadores: 0";
-      document.getElementById("players").innerHTML='<div class="empty">Nenhuma sessão criada ainda.</div>';
-      return;
-    }
-
-    const sessionId=game.sessionId;
-    const raw=await getJson(`sessions/${sessionId}/players`)||{};
-    const players=Object.entries(raw).map(([id,p])=>({id,...p})).sort((a,b)=>(a.joinedAt||0)-(b.joinedAt||0));
-
-    for(const p of players){
-      if(!p.finished && p.startedAt && now()>=p.startedAt+GAME_DURATION){
-        await patchJson(`sessions/${sessionId}/players/${p.id}`,{
-          status:"finished",
-          finished:true,
-          finishedAt:p.startedAt+GAME_DURATION
-        });
-        p.status="finished";
-        p.finished=true;
-        p.finishedAt=p.startedAt+GAME_DURATION;
-      }
-    }
-
-    document.getElementById("count").textContent=`Jogadores: ${players.length}`;
-
-    if(!players.length){
-      document.getElementById("players").innerHTML='<div class="empty">Aguardando jogadores...</div>';
-    }else{
-      document.getElementById("players").innerHTML=players.map(p=>{
-        let label="REGISTRADO", cls="ready", time="02:00";
-        if(p.finished || p.status==="finished"){
-          label="FINALIZADO"; cls="finished"; time="00:00";
-        }else if(p.startedAt){
-          const left=p.startedAt-now();
-          if(left>0){
-            label="CONTAGEM"; cls="ready"; time="02:00";
-          }else{
-            label="EM JOGO"; cls="running";
-            time=formatTime(p.startedAt+GAME_DURATION-now());
-          }
-        }
-        return `
-          <div class="player">
-            <strong>${escapeHtml(p.name||"Sem nome")}</strong>
-            <span class="status ${cls}">${label}</span>
-            <span class="time">${time}</span>
-          </div>`;
-      }).join("");
-    }
-    document.getElementById("error").textContent="";
-  }catch(err){
-    document.getElementById("error").textContent="Erro: "+err.message;
-    document.getElementById("error").className="small bad";
+ try{
+  const game=await getJson("game");
+  if(!game||!game.sessionId||game.version!==VERSION){
+    document.getElementById("count").textContent="Jogadores: 0";
+    document.getElementById("players").innerHTML='<div class="empty">Clique em NOVA PARTIDA para iniciar a Etapa 6.</div>';
+    return;
   }
-}
+  const sid=game.sessionId;
+  const raw=await getJson(`sessions/${sid}/players`)||{};
+  const players=Object.entries(raw).map(([id,p])=>({id,...p})).sort((a,b)=>(a.joinedAt||0)-(b.joinedAt||0));
 
-document.getElementById("newSessionBtn").addEventListener("click",newSession);
-syncClock().then(refresh);
-setInterval(syncClock,30000);
-setInterval(refresh,500);
+  for(const p of players){
+    if(!p.finished&&p.startedAt&&now()>=p.startedAt+GAME_DURATION){
+      p.finished=true;p.status="finished";p.finishedAt=p.startedAt+GAME_DURATION;
+      await patchJson(`sessions/${sid}/players/${p.id}`,{finished:true,status:"finished",finishedAt:p.finishedAt,finishReason:"time"});
+    }
+  }
+
+  document.getElementById("count").textContent=`Jogadores: ${players.length}`;
+  if(!players.length){
+    document.getElementById("players").innerHTML='<div class="empty">Aguardando jogadores...</div>';
+  }else{
+    document.getElementById("players").innerHTML=players.map(p=>{
+      let label="CONTAGEM",cls="yellow",time="02:00";
+      if(p.finished){label="FINALIZADO";cls="blue";time="00:00"}
+      else if(p.startedAt&&now()>=p.startedAt){label="EM JOGO";cls="green";time=formatTime(p.startedAt+GAME_DURATION-now())}
+      const q=Math.min(8,Number(p.answeredCount||0));
+      return `<div class="player">
+        <strong>${esc(p.name||"Sem nome")}</strong>
+        <span class="status ${cls}">${label}</span>
+        <span>Q: <b>${q}/8</b></span>
+        <span>Acertos: <b>${Number(p.hits||0)}</b></span>
+        <span class="mono">${time} • ${Number(p.score||0)} pts</span>
+      </div>`;
+    }).join("");
+  }
+  document.getElementById("error").textContent="";
+ }catch(err){
+  document.getElementById("error").textContent="Erro: "+err.message;
+  document.getElementById("error").className="small bad";
+ }
+}
+document.getElementById("newSessionBtn").onclick=newSession;
+syncClock().then(refresh);setInterval(syncClock,30000);setInterval(refresh,500);
 </script>
 </body>
 </html>

@@ -3,158 +3,268 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Quiz Heranças — Etapa 5</title>
+<title>Quiz Heranças — Etapa 6</title>
 <style>
 *{box-sizing:border-box}
-body{margin:0;min-height:100vh;display:grid;place-items:center;padding:20px;background:#0b1630;color:#fff;font-family:Arial,sans-serif}
-.card{width:min(560px,100%);background:#172440;border:2px solid #fff;padding:26px;text-align:center}
-h1{margin:0 0 8px;font-size:28px}
-p{line-height:1.45}
-label{display:block;margin:18px 0 7px;font-weight:700;text-align:left}
+body{margin:0;min-height:100vh;background:#0b1630;color:#fff;font-family:Arial,sans-serif;padding:18px;display:grid;place-items:center}
+.card{width:min(760px,100%);background:#172440;border:2px solid #fff;padding:24px}
+h1{margin:0 0 8px} p{line-height:1.45}
+label{display:block;margin:16px 0 7px;font-weight:700}
 input{width:100%;font-size:18px;padding:13px;border:2px solid #fff;background:#0f1a33;color:#fff}
-button{width:100%;margin-top:14px;padding:14px;font-size:17px;font-weight:700;border:0;cursor:pointer;background:#ffd34d;color:#111}
-button:disabled{opacity:.55;cursor:not-allowed}
-.status{margin-top:14px;min-height:22px}
-.ok{color:#63df95;font-weight:700}
-.bad{color:#ff8585;font-weight:700}
-.small{font-size:13px;color:#c8d1e6}
+button{font-family:inherit}
+.join{width:100%;margin-top:14px;padding:14px;font-size:17px;font-weight:800;border:0;background:#ffd34d;color:#111;cursor:pointer}
+.join:disabled{opacity:.55}
 .hidden{display:none}
-.countdown{font-size:72px;font-weight:900;color:#ffd34d;margin:20px 0}
-.timer{font-size:64px;font-weight:900;color:#63df95;margin:12px 0}
-.state{font-size:18px;font-weight:700}
+.small{font-size:13px;color:#c8d1e6}
+.badtext{color:#ff8585;font-weight:700}
+.countdown{font-size:76px;font-weight:900;color:#ffd34d;text-align:center;margin:18px 0}
+.topbar{display:grid;grid-template-columns:1fr auto auto;gap:12px;align-items:center;margin-bottom:14px}
+.pill{background:#0f1a33;border:1px solid #607399;padding:8px 10px;font-weight:700}
+.timer{color:#63df95;font-size:22px}
+.qtimer{color:#ffd34d}
+.progress{height:10px;background:#0f1a33;border:1px solid #607399;margin:10px 0 18px}
+.progress>div{height:100%;background:#ffd34d;width:0;transition:width .2s}
+.question{font-size:21px;font-weight:800;line-height:1.35;margin:0 0 14px}
+.answers{display:grid;gap:10px}
+.answer{text-align:left;padding:13px 14px;border:2px solid #fff;background:#203150;color:#fff;font-size:16px;cursor:pointer}
+.answer:hover{background:#2a4169}
+.answer:disabled{cursor:default;opacity:.96}
+.answer.correct{border-color:#63df95;background:#173b2a}
+.answer.wrong{border-color:#ff8585;background:#48202a}
+.feedback{font-size:24px;font-weight:900;text-align:center;margin-top:14px;min-height:32px}
+.feedback.ok{color:#63df95} .feedback.bad{color:#ff8585}
+.explanation{margin-top:8px;text-align:center;line-height:1.4;color:#dce4f5;min-height:38px}
+.stats{display:flex;gap:10px;flex-wrap:wrap;margin-top:15px}
+.stat{background:#0f1a33;border:1px solid #607399;padding:8px 10px;font-weight:700}
+.final{text-align:center}
+.final strong{color:#63df95}
 </style>
 </head>
 <body>
 <main class="card">
-  <section id="entry">
-    <h1>Herança, Desigualdade e Tributação</h1>
-    <p>Digite seu nome para entrar na sessão do quiz.</p>
-    <label for="playerName">Nome</label>
-    <input id="playerName" maxlength="20" autocomplete="name" placeholder="Ex.: Rodolpho Moraes">
-    <button id="joinBtn">ENTRAR</button>
-    <div id="status" class="status"></div>
-    <p class="small">Máximo de 20 caracteres.</p>
-  </section>
+<section id="entry">
+  <h1>Herança, Desigualdade e Tributação</h1>
+  <p>Digite seu nome para entrar na sessão do quiz.</p>
+  <label for="playerName">Nome</label>
+  <input id="playerName" maxlength="20" autocomplete="name" placeholder="Ex.: Rodolpho Moraes">
+  <button id="joinBtn" class="join">ENTRAR</button>
+  <div id="entryStatus"></div>
+  <p class="small">Máximo de 20 caracteres.</p>
+</section>
 
-  <section id="countdownScreen" class="hidden">
-    <h1 id="countName">Prepare-se!</h1>
-    <div id="countdown" class="countdown">3</div>
-    <p class="small">A largada é automática.</p>
-  </section>
+<section id="countdownScreen" class="hidden">
+  <h1 id="countName" style="text-align:center">Prepare-se!</h1>
+  <div id="countdown" class="countdown">3</div>
+  <p class="small" style="text-align:center">A largada é automática.</p>
+</section>
 
-  <section id="runningScreen" class="hidden">
-    <h1 id="runningName">Corrida iniciada</h1>
-    <div class="state">TEMPO RESTANTE</div>
-    <div id="timer" class="timer">02:00</div>
-    <p class="small">Nesta etapa estamos testando apenas a largada e o cronômetro.</p>
-  </section>
+<section id="quizScreen" class="hidden">
+  <div class="topbar">
+    <div class="pill" id="playerLabel">Jogador</div>
+    <div class="pill qtimer">QUESTÃO: <span id="questionTimer">15</span>s</div>
+    <div class="pill timer">TEMPO: <span id="gameTimer">02:00</span></div>
+  </div>
+  <div class="progress"><div id="progressFill"></div></div>
+  <div class="small" id="questionCount">Pergunta 1/8</div>
+  <div class="question" id="questionText"></div>
+  <div class="answers" id="answers"></div>
+  <div class="feedback" id="feedback"></div>
+  <div class="explanation" id="explanation"></div>
+  <div class="stats">
+    <div class="stat">ACERTOS: <span id="hits">0</span></div>
+    <div class="stat">PONTOS: <span id="score">0</span></div>
+    <div class="stat">RESPONDIDAS: <span id="answered">0</span>/8</div>
+  </div>
+</section>
 
-  <section id="finishedScreen" class="hidden">
-    <h1>Tempo encerrado</h1>
-    <p id="finishedName"></p>
-    <p class="ok">Status: FINALIZADO</p>
-  </section>
+<section id="finishedScreen" class="hidden final">
+  <h1>Quiz finalizado</h1>
+  <p id="finishReason"></p>
+  <p>Acertos: <strong id="finalHits">0</strong>/8</p>
+  <p>Pontuação: <strong id="finalScore">0</strong></p>
+</section>
 </main>
 
 <script>
 const DB_BASE="https://quiz-herancas-itcmd-default-rtdb.firebaseio.com";
 const ROOT="quizHerancasV2";
+const VERSION="v2-stage6";
 const COUNTDOWN_MS=2200;
 const COUNTDOWN_STEP=550;
 const GAME_DURATION=120000;
+const QUESTION_SECONDS=15;
+const QUESTIONS=[{"question":"Segundo Thomas Piketty, qual era o peso do fluxo anual de heranças e doações na renda nacional francesa durante o século XIX?","answers":["Entre 5% e 10%","Entre 10% e 15%","Entre 20% e 25%","Entre 35% e 40%"],"correct":2,"explanation":"Segundo Piketty, durante o século XIX, o fluxo anual de heranças e doações representava aproximadamente 20% a 25% da renda nacional francesa, chegando próximo de 25% durante a Belle Époque."},{"question":"Na análise de Thomas Piketty, o que significa a relação r > g?","answers":["A renda do trabalho cresce mais rapidamente que a riqueza herdada.","A taxa de retorno do capital é superior à taxa de crescimento da economia.","A arrecadação tributária cresce mais rapidamente que o PIB.","A taxa de crescimento populacional é maior que a taxa de retorno do capital."],"correct":1,"explanation":"Em Piketty, “r” representa a taxa de rendimento do capital e “g” representa a taxa de crescimento da economia. Quando r > g, a riqueza acumulada no passado tende a crescer mais rapidamente do que a produção e a renda correntes."},{"question":"Quais são as três forças que compõem a equação do fluxo econômico anual das heranças formulada por Piketty?","answers":["Renda, poupança e tributação.","Crescimento econômico, inflação e taxa de juros.","Relação capital/renda, taxa de mortalidade e relação entre a riqueza dos falecidos e a riqueza dos vivos.","Fecundidade, expectativa de vida e renda do trabalho."],"correct":2,"explanation":"Piketty apresenta a identidade bᵧ = μ × m × β: β é a relação capital/renda; m é a taxa de mortalidade; μ é a relação entre a riqueza média no momento do óbito e a riqueza média dos vivos."},{"question":"Segundo o levantamento internacional utilizado no fichamento, quais destes países latino-americanos estavam sem imposto sobre heranças?","answers":["Brasil, Chile, Colômbia e Equador.","Argentina, Costa Rica, México, Panamá, Peru e Uruguai.","Argentina, Brasil, Chile e México.","Chile, Colômbia, Peru e Uruguai."],"correct":1,"explanation":"Segundo o levantamento utilizado no estudo, México e Peru haviam abolido o imposto sobre heranças, enquanto Argentina, Costa Rica, Panamá e Uruguai não o haviam introduzido no contexto temporal analisado."},{"question":"No comparativo internacional apresentado no fichamento, qual país possui a maior alíquota máxima do imposto sobre heranças?","answers":["França — 45%","Coreia do Sul — 50%","Japão — 55%","Reino Unido — 40%"],"correct":2,"explanation":"Na tabela internacional utilizada no fichamento, o Japão aparece com alíquota máxima de 55%, seguido pela Coreia do Sul, com 50%, e pela França, com 45%."},{"question":"Qual é a alíquota máxima nacional atualmente permitida para o ITCMD no Brasil?","answers":["4%","6%","8%","12%"],"correct":2,"explanation":"A Resolução do Senado Federal nº 9/1992 estabeleceu em 8% a alíquota máxima do ITCMD."},{"question":"No levantamento de 2026 utilizado no projeto, em quantas das 27 unidades da Federação o ITCMD possui estrutura de alíquota única, isto é, não progressiva?","answers":["5","7","10","17"],"correct":1,"explanation":"No levantamento atualizado de 2026, 20 das 27 unidades da Federação possuem estrutura progressiva de ITCMD. Consequentemente, em 7 unidades da Federação permanece uma estrutura de alíquota única, isto é, não progressiva."},{"question":"No contexto jurídico analisado pelo estudo, qual lacuna ou dificuldade favorecia a redução ou evasão da tributação sobre grandes heranças?","answers":["A impossibilidade de adoção de alíquotas progressivas.","A obrigatoriedade de divisão igualitária de todo o patrimônio entre os herdeiros.","As dificuldades de tributação das transmissões oriundas do exterior, especialmente envolvendo trusts e estruturas offshore.","A repartição obrigatória do ITCMD com os municípios."],"correct":2,"explanation":"O estudo destaca como desafio o uso de trusts e estruturas offshore e as dificuldades existentes, naquele contexto jurídico, para alcançar transmissões patrimoniais provenientes do exterior."}];
 
-let serverTimeOffset=0;
-let currentSession=null;
-let currentPlayer=null;
-let startedAt=null;
-let rafId=null;
+let serverTimeOffset=0,currentSession=null,currentPlayer=null,playerName="";
+let startedAt=0,questionIndex=0,hits=0,score=0,answered=0;
+let answerLocked=false,questionStartedAt=0,qTimer=null,rafId=null,finished=false;
 
 async function syncClock(){
   try{
     const r=await fetch(`${DB_BASE}/.info/serverTimeOffset.json?ts=${Date.now()}`,{cache:"no-store"});
     serverTimeOffset=Number(await r.json())||0;
-  }catch(e){ serverTimeOffset=0; }
+  }catch(e){serverTimeOffset=0}
 }
-function now(){ return Date.now()+serverTimeOffset; }
-
-async function getJson(path){
-  const r=await fetch(`${DB_BASE}/${ROOT}/${path}.json?ts=${Date.now()}`,{cache:"no-store"});
-  if(!r.ok) throw new Error(`Erro de leitura (${r.status})`);
-  return await r.json();
-}
-async function putJson(path,value){
-  const r=await fetch(`${DB_BASE}/${ROOT}/${path}.json`,{
-    method:"PUT",
-    headers:{"Content-Type":"application/json"},
-    body:JSON.stringify(value)
-  });
-  if(!r.ok) throw new Error(`Erro de gravação (${r.status})`);
-}
-async function patchJson(path,value){
-  const r=await fetch(`${DB_BASE}/${ROOT}/${path}.json`,{
-    method:"PATCH",
-    headers:{"Content-Type":"application/json"},
-    body:JSON.stringify(value)
-  });
-  if(!r.ok) throw new Error(`Erro de atualização (${r.status})`);
-}
-function makeId(prefix){
-  return `${prefix}_${Math.round(now())}_${Math.random().toString(36).slice(2,8)}`;
-}
+function now(){return Date.now()+serverTimeOffset}
+function makeId(prefix){return `${prefix}_${Math.round(now())}_${Math.random().toString(36).slice(2,8)}`}
 function formatTime(ms){
   const s=Math.max(0,Math.ceil(ms/1000));
   return String(Math.floor(s/60)).padStart(2,"0")+":"+String(s%60).padStart(2,"0");
 }
+async function getJson(path){
+  const r=await fetch(`${DB_BASE}/${ROOT}/${path}.json?ts=${Date.now()}`,{cache:"no-store"});
+  if(!r.ok)throw new Error(`Leitura ${r.status}`);
+  return await r.json();
+}
+async function putJson(path,value){
+  const r=await fetch(`${DB_BASE}/${ROOT}/${path}.json`,{method:"PUT",headers:{"Content-Type":"application/json"},body:JSON.stringify(value)});
+  if(!r.ok)throw new Error(`Gravação ${r.status}`);
+}
+async function patchJson(path,value){
+  const r=await fetch(`${DB_BASE}/${ROOT}/${path}.json`,{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify(value)});
+  if(!r.ok)throw new Error(`Atualização ${r.status}`);
+}
 function show(id){
-  ["entry","countdownScreen","runningScreen","finishedScreen"].forEach(x=>document.getElementById(x).classList.add("hidden"));
+  ["entry","countdownScreen","quizScreen","finishedScreen"].forEach(x=>document.getElementById(x).classList.add("hidden"));
   document.getElementById(id).classList.remove("hidden");
 }
 async function getOrCreateSession(){
   let game=await getJson("game");
-  if(game && game.sessionId && game.version==="v2-stage5") return game;
-
+  if(game&&game.sessionId&&game.version===VERSION)return game;
   const sessionId=makeId("session");
-  game={version:"v2-stage5",sessionId,status:"lobby",createdAt:now()};
+  game={version:VERSION,sessionId,status:"lobby",createdAt:now()};
   await putJson("game",game);
   await putJson(`sessions/${sessionId}`,{createdAt:now(),status:"lobby"});
   return game;
 }
-async function finalizePlayer(){
+async function syncPlayer(extra={}){
   if(!currentSession||!currentPlayer)return;
-  const finishAt=startedAt+GAME_DURATION;
-  await patchJson(`sessions/${currentSession}/players/${currentPlayer}`,{
+  await patchJson(`sessions/${currentSession}/players/${currentPlayer}`,extra);
+}
+function updateHUD(){
+  document.getElementById("hits").textContent=hits;
+  document.getElementById("score").textContent=score;
+  document.getElementById("answered").textContent=answered;
+  document.getElementById("questionCount").textContent=`Pergunta ${Math.min(questionIndex+1,QUESTIONS.length)}/${QUESTIONS.length}`;
+  document.getElementById("progressFill").style.width=`${(answered/QUESTIONS.length)*100}%`;
+}
+async function finishGame(reason){
+  if(finished)return;
+  finished=true;
+  clearInterval(qTimer);
+  cancelAnimationFrame(rafId);
+  const finishAt=now();
+  await syncPlayer({
     status:"finished",
     finished:true,
-    finishedAt:finishAt
+    finishedAt:finishAt,
+    finishReason:reason,
+    hits,score,answeredCount:answered,
+    progress:1
   });
-  cancelAnimationFrame(rafId);
-  document.getElementById("finishedName").textContent=`${document.getElementById("runningName").textContent.replace("Corrida de ","")}, sua etapa de tempo foi concluída.`;
+  document.getElementById("finalHits").textContent=hits;
+  document.getElementById("finalScore").textContent=score;
+  document.getElementById("finishReason").textContent=reason==="questions"?"Você respondeu as 8 perguntas.":"O tempo de 2 minutos foi encerrado.";
   show("finishedScreen");
 }
-function runTimer(){
+function runGameClock(){
+  if(finished)return;
   const remaining=startedAt+GAME_DURATION-now();
-  document.getElementById("timer").textContent=formatTime(remaining);
-  if(remaining<=0){
-    finalizePlayer();
-    return;
-  }
-  rafId=requestAnimationFrame(runTimer);
+  document.getElementById("gameTimer").textContent=formatTime(remaining);
+  if(remaining<=0){finishGame("time");return}
+  rafId=requestAnimationFrame(runGameClock);
 }
-function runCountdown(name){
+function showQuestion(){
+  if(finished)return;
+  if(questionIndex>=QUESTIONS.length){finishGame("questions");return}
+  answerLocked=false;
+  clearInterval(qTimer);
+  const q=QUESTIONS[questionIndex];
+  document.getElementById("feedback").textContent="";
+  document.getElementById("feedback").className="feedback";
+  document.getElementById("explanation").textContent="";
+  document.getElementById("questionText").textContent=q.question;
+  const holder=document.getElementById("answers");
+  holder.innerHTML="";
+  q.answers.forEach((text,i)=>{
+    const b=document.createElement("button");
+    b.className="answer";
+    b.textContent=`${String.fromCharCode(65+i)}. ${text}`;
+    b.onclick=()=>answerQuestion(i,b);
+    holder.appendChild(b);
+  });
+  questionStartedAt=performance.now();
+  let left=QUESTION_SECONDS;
+  document.getElementById("questionTimer").textContent=left;
+  updateHUD();
+  qTimer=setInterval(()=>{
+    left--;
+    document.getElementById("questionTimer").textContent=Math.max(0,left);
+    if(left<=0){clearInterval(qTimer);answerQuestion(-1,null)}
+  },1000);
+}
+async function answerQuestion(choice,clicked){
+  if(answerLocked||finished)return;
+  answerLocked=true;
+  clearInterval(qTimer);
+  const q=QUESTIONS[questionIndex];
+  const buttons=[...document.querySelectorAll(".answer")];
+  buttons.forEach(b=>b.disabled=true);
+  buttons[q.correct].classList.add("correct");
+
+  const correct=choice===q.correct;
+  if(correct){
+    const elapsed=Math.max(0,(performance.now()-questionStartedAt)/1000);
+    const remaining=Math.max(0,QUESTION_SECONDS-elapsed);
+    const speedBonus=Math.round(remaining*10);
+    hits++;
+    score+=100+speedBonus;
+    if(clicked)clicked.classList.add("correct");
+    document.getElementById("feedback").textContent="CORRETO!";
+    document.getElementById("feedback").className="feedback ok";
+  }else{
+    if(clicked)clicked.classList.add("wrong");
+    document.getElementById("feedback").textContent="INCORRETO!";
+    document.getElementById("feedback").className="feedback bad";
+  }
+
+  answered++;
+  const letter=String.fromCharCode(65+q.correct);
+  document.getElementById("explanation").textContent=`Alternativa correta: ${letter}. ${q.answers[q.correct]} — ${q.explanation}`;
+  updateHUD();
+
+  await syncPlayer({
+    hits,score,answeredCount:answered,
+    qIndex:questionIndex+1,
+    lastAnswer:choice,
+    lastAnswerCorrect:correct,
+    status:"answering",
+    updatedAt:now()
+  });
+
+  setTimeout(()=>{
+    if(finished)return;
+    questionIndex++;
+    if(questionIndex>=QUESTIONS.length)finishGame("questions");
+    else showQuestion();
+  },2200);
+}
+function runCountdown(){
   show("countdownScreen");
-  document.getElementById("countName").textContent=`Prepare-se, ${name}!`;
-  const startAt=startedAt;
+  document.getElementById("countName").textContent=`Prepare-se, ${playerName}!`;
   const loop=()=>{
-    const left=startAt-now();
+    const left=startedAt-now();
     const el=document.getElementById("countdown");
     if(left>COUNTDOWN_STEP*3)el.textContent="3";
     else if(left>COUNTDOWN_STEP*2)el.textContent="2";
     else if(left>COUNTDOWN_STEP)el.textContent="1";
     else if(left>0)el.textContent="GO!";
     else{
-      show("runningScreen");
-      document.getElementById("runningName").textContent=`Corrida de ${name}`;
-      runTimer();
+      show("quizScreen");
+      document.getElementById("playerLabel").textContent=playerName;
+      syncPlayer({status:"running"});
+      runGameClock();
+      showQuestion();
       return;
     }
     requestAnimationFrame(loop);
@@ -162,62 +272,34 @@ function runCountdown(name){
   loop();
 }
 
-const nameInput=document.getElementById("playerName");
-const joinBtn=document.getElementById("joinBtn");
-const statusEl=document.getElementById("status");
-
-joinBtn.addEventListener("click",async()=>{
-  const name=nameInput.value.trim().replace(/\s+/g," ");
-  statusEl.className="status";
-  if(!name){
-    statusEl.textContent="Digite seu nome.";
-    statusEl.classList.add("bad");
-    nameInput.focus();
-    return;
-  }
-  if(name.length>20){
-    statusEl.textContent="Use no máximo 20 caracteres.";
-    statusEl.classList.add("bad");
-    return;
-  }
-
-  joinBtn.disabled=true;
-  statusEl.textContent="Registrando...";
+document.getElementById("joinBtn").onclick=async()=>{
+  const input=document.getElementById("playerName");
+  playerName=input.value.trim().replace(/\s+/g," ");
+  const status=document.getElementById("entryStatus");
+  status.textContent="";
+  if(!playerName){status.textContent="Digite seu nome.";status.className="badtext";return}
+  if(playerName.length>20){status.textContent="Use no máximo 20 caracteres.";status.className="badtext";return}
+  document.getElementById("joinBtn").disabled=true;
   try{
     await syncClock();
     const game=await getOrCreateSession();
     currentSession=game.sessionId;
     currentPlayer=makeId("player");
     startedAt=now()+COUNTDOWN_MS;
-
     await putJson(`sessions/${currentSession}/players/${currentPlayer}`,{
-      name,
-      joinedAt:now(),
-      startedAt,
-      hits:0,
-      score:0,
-      answeredCount:0,
-      progress:0,
-      finished:false,
-      finishedAt:null,
-      status:"countdown"
+      name:playerName,joinedAt:now(),startedAt,
+      hits:0,score:0,answeredCount:0,qIndex:0,progress:0,
+      finished:false,finishedAt:null,status:"countdown"
     });
-
-    setTimeout(()=>patchJson(`sessions/${currentSession}/players/${currentPlayer}`,{status:"running"}),COUNTDOWN_MS+50);
-    runCountdown(name);
+    runCountdown();
   }catch(err){
-    statusEl.textContent="Não foi possível entrar: "+err.message;
-    statusEl.className="status bad";
-    joinBtn.disabled=false;
+    status.textContent="Erro ao entrar: "+err.message;
+    status.className="badtext";
+    document.getElementById("joinBtn").disabled=false;
   }
-});
-
-nameInput.addEventListener("keydown",e=>{
-  if(e.key==="Enter") joinBtn.click();
-});
-
-syncClock();
-setInterval(syncClock,30000);
+};
+document.getElementById("playerName").addEventListener("keydown",e=>{if(e.key==="Enter")document.getElementById("joinBtn").click()});
+syncClock();setInterval(syncClock,30000);
 </script>
 </body>
 </html>
