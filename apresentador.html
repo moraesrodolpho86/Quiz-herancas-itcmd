@@ -3,29 +3,33 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Quiz Heranças — Apresentador</title>
+<title>Quiz Heranças — Apresentador Etapa 5</title>
 <style>
-  *{box-sizing:border-box}
-  body{margin:0;min-height:100vh;background:#0b1630;color:#fff;font-family:Arial,sans-serif;padding:24px}
-  .wrap{width:min(900px,100%);margin:auto}
-  .panel{background:#172440;border:2px solid #fff;padding:22px}
-  h1{margin:0 0 8px}
-  .meta{color:#c8d1e6;margin-bottom:18px}
-  .count{font-size:20px;font-weight:700;margin-bottom:12px}
-  .list{display:grid;gap:8px}
-  .player{display:flex;justify-content:space-between;gap:14px;background:#0f1a33;border:1px solid #607399;padding:12px 14px}
-  .player strong{font-size:17px}
-  .tag{color:#63df95;font-weight:700}
-  .empty{color:#c8d1e6;border:1px dashed #607399;padding:16px}
-  .bad{color:#ff8585}
-  .small{font-size:13px;color:#c8d1e6;margin-top:16px}
+*{box-sizing:border-box}
+body{margin:0;min-height:100vh;background:#0b1630;color:#fff;font-family:Arial,sans-serif;padding:24px}
+.wrap{width:min(980px,100%);margin:auto}
+.panel{background:#172440;border:2px solid #fff;padding:22px}
+h1{margin:0 0 8px}
+.meta{color:#c8d1e6;margin-bottom:18px}
+.count{font-size:20px;font-weight:700;margin-bottom:12px}
+.list{display:grid;gap:8px}
+.player{display:grid;grid-template-columns:1fr auto auto;gap:14px;align-items:center;background:#0f1a33;border:1px solid #607399;padding:12px 14px}
+.player strong{font-size:17px}
+.status{font-weight:700}
+.ready{color:#ffd34d}
+.running{color:#63df95}
+.finished{color:#72d8ff}
+.time{font-family:monospace;font-size:16px}
+.empty{color:#c8d1e6;border:1px dashed #607399;padding:16px}
+.bad{color:#ff8585}
+.small{font-size:13px;color:#c8d1e6;margin-top:16px}
 </style>
 </head>
 <body>
 <main class="wrap">
   <section class="panel">
-    <h1>Modo apresentador — Etapa 4</h1>
-    <div class="meta">Cadastro de jogadores em tempo real</div>
+    <h1>Modo apresentador — Etapa 5</h1>
+    <div class="meta">Largada automática e cronômetro individual de 2 minutos</div>
     <div id="count" class="count">Jogadores: 0</div>
     <div id="players" class="list"><div class="empty">Aguardando jogadores...</div></div>
     <div id="error" class="small"></div>
@@ -35,45 +39,87 @@
 <script>
 const DB_BASE="https://quiz-herancas-itcmd-default-rtdb.firebaseio.com";
 const ROOT="quizHerancasV2";
-let currentSession=null;
+const GAME_DURATION=120000;
+let serverTimeOffset=0;
 
+async function syncClock(){
+  try{
+    const r=await fetch(`${DB_BASE}/.info/serverTimeOffset.json?ts=${Date.now()}`,{cache:"no-store"});
+    serverTimeOffset=Number(await r.json())||0;
+  }catch(e){serverTimeOffset=0;}
+}
+function now(){return Date.now()+serverTimeOffset;}
+function formatTime(ms){
+  const s=Math.max(0,Math.ceil(ms/1000));
+  return String(Math.floor(s/60)).padStart(2,"0")+":"+String(s%60).padStart(2,"0");
+}
 async function getJson(path){
   const r=await fetch(`${DB_BASE}/${ROOT}/${path}.json?ts=${Date.now()}`,{cache:"no-store"});
   if(!r.ok) throw new Error(`Erro de leitura (${r.status})`);
   return await r.json();
 }
-
-function escapeHtml(s){
-  return String(s).replace(/[&<>"']/g,c=>({
-    "&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#039;"
-  }[c]));
+async function patchJson(path,value){
+  const r=await fetch(`${DB_BASE}/${ROOT}/${path}.json`,{
+    method:"PATCH",
+    headers:{"Content-Type":"application/json"},
+    body:JSON.stringify(value)
+  });
+  if(!r.ok) throw new Error(`Erro de atualização (${r.status})`);
 }
-
+function escapeHtml(s){
+  return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#039;"}[c]));
+}
 async function refresh(){
   try{
     const game=await getJson("game");
-    if(!game || !game.sessionId){
+    if(!game||!game.sessionId){
       document.getElementById("count").textContent="Jogadores: 0";
-      document.getElementById("players").innerHTML='<div class="empty">Nenhuma sessão criada ainda. Abra a página do participante e entre com um nome.</div>';
-      document.getElementById("error").textContent="";
+      document.getElementById("players").innerHTML='<div class="empty">Nenhuma sessão criada ainda.</div>';
       return;
     }
 
-    currentSession=game.sessionId;
-    const raw=await getJson(`sessions/${currentSession}/players`)||{};
+    const sessionId=game.sessionId;
+    const raw=await getJson(`sessions/${sessionId}/players`)||{};
     const players=Object.entries(raw).map(([id,p])=>({id,...p})).sort((a,b)=>(a.joinedAt||0)-(b.joinedAt||0));
+
+    for(const p of players){
+      if(!p.finished && p.startedAt && now()>=p.startedAt+GAME_DURATION){
+        await patchJson(`sessions/${sessionId}/players/${p.id}`,{
+          status:"finished",
+          finished:true,
+          finishedAt:p.startedAt+GAME_DURATION
+        });
+        p.status="finished";
+        p.finished=true;
+        p.finishedAt=p.startedAt+GAME_DURATION;
+      }
+    }
 
     document.getElementById("count").textContent=`Jogadores: ${players.length}`;
 
     if(!players.length){
       document.getElementById("players").innerHTML='<div class="empty">Aguardando jogadores...</div>';
     }else{
-      document.getElementById("players").innerHTML=players.map(p=>`
-        <div class="player">
-          <strong>${escapeHtml(p.name||"Sem nome")}</strong>
-          <span class="tag">REGISTRADO</span>
-        </div>
-      `).join("");
+      document.getElementById("players").innerHTML=players.map(p=>{
+        let label="REGISTRADO", cls="ready", time="02:00";
+        if(p.finished || p.status==="finished"){
+          label="FINALIZADO"; cls="finished"; time="00:00";
+        }else if(p.startedAt){
+          const left=p.startedAt-now();
+          if(left>0){
+            label="CONTAGEM"; cls="ready"; time="02:00";
+          }else{
+            label="EM JOGO"; cls="running";
+            time=formatTime(p.startedAt+GAME_DURATION-now());
+          }
+        }
+        return `
+          <div class="player">
+            <strong>${escapeHtml(p.name||"Sem nome")}</strong>
+            <span class="status ${cls}">${label}</span>
+            <span class="time">${time}</span>
+          </div>`;
+      }).join("");
     }
     document.getElementById("error").textContent="";
   }catch(err){
@@ -82,8 +128,9 @@ async function refresh(){
   }
 }
 
-refresh();
-setInterval(refresh,800);
+syncClock().then(refresh);
+setInterval(syncClock,30000);
+setInterval(refresh,500);
 </script>
 </body>
 </html>

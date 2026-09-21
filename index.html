@@ -3,22 +3,25 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Quiz Heranças — Entrada</title>
+<title>Quiz Heranças — Etapa 5</title>
 <style>
-  *{box-sizing:border-box}
-  body{margin:0;min-height:100vh;display:grid;place-items:center;padding:20px;background:#0b1630;color:#fff;font-family:Arial,sans-serif}
-  .card{width:min(520px,100%);background:#172440;border:2px solid #fff;padding:26px}
-  h1{margin:0 0 8px;font-size:28px}
-  p{line-height:1.45}
-  label{display:block;margin:18px 0 7px;font-weight:700}
-  input{width:100%;font-size:18px;padding:13px;border:2px solid #fff;background:#0f1a33;color:#fff}
-  button{width:100%;margin-top:14px;padding:14px;font-size:17px;font-weight:700;border:0;cursor:pointer;background:#ffd34d;color:#111}
-  button:disabled{opacity:.55;cursor:not-allowed}
-  .status{margin-top:14px;min-height:22px}
-  .ok{color:#63df95;font-weight:700}
-  .bad{color:#ff8585;font-weight:700}
-  .small{font-size:13px;color:#c8d1e6}
-  .hidden{display:none}
+*{box-sizing:border-box}
+body{margin:0;min-height:100vh;display:grid;place-items:center;padding:20px;background:#0b1630;color:#fff;font-family:Arial,sans-serif}
+.card{width:min(560px,100%);background:#172440;border:2px solid #fff;padding:26px;text-align:center}
+h1{margin:0 0 8px;font-size:28px}
+p{line-height:1.45}
+label{display:block;margin:18px 0 7px;font-weight:700;text-align:left}
+input{width:100%;font-size:18px;padding:13px;border:2px solid #fff;background:#0f1a33;color:#fff}
+button{width:100%;margin-top:14px;padding:14px;font-size:17px;font-weight:700;border:0;cursor:pointer;background:#ffd34d;color:#111}
+button:disabled{opacity:.55;cursor:not-allowed}
+.status{margin-top:14px;min-height:22px}
+.ok{color:#63df95;font-weight:700}
+.bad{color:#ff8585;font-weight:700}
+.small{font-size:13px;color:#c8d1e6}
+.hidden{display:none}
+.countdown{font-size:72px;font-weight:900;color:#ffd34d;margin:20px 0}
+.timer{font-size:64px;font-weight:900;color:#63df95;margin:12px 0}
+.state{font-size:18px;font-weight:700}
 </style>
 </head>
 <body>
@@ -26,27 +29,45 @@
   <section id="entry">
     <h1>Herança, Desigualdade e Tributação</h1>
     <p>Digite seu nome para entrar na sessão do quiz.</p>
-
     <label for="playerName">Nome</label>
     <input id="playerName" maxlength="20" autocomplete="name" placeholder="Ex.: Rodolpho Moraes">
-
     <button id="joinBtn">ENTRAR</button>
     <div id="status" class="status"></div>
     <p class="small">Máximo de 20 caracteres.</p>
   </section>
 
-  <section id="joined" class="hidden">
-    <h1>Entrada confirmada</h1>
-    <p id="welcome"></p>
-    <p class="ok">Seu nome foi registrado no Firebase.</p>
-    <p class="small">Nesta etapa ainda não há corrida nem perguntas.</p>
+  <section id="countdownScreen" class="hidden">
+    <h1 id="countName">Prepare-se!</h1>
+    <div id="countdown" class="countdown">3</div>
+    <p class="small">A largada é automática.</p>
+  </section>
+
+  <section id="runningScreen" class="hidden">
+    <h1 id="runningName">Corrida iniciada</h1>
+    <div class="state">TEMPO RESTANTE</div>
+    <div id="timer" class="timer">02:00</div>
+    <p class="small">Nesta etapa estamos testando apenas a largada e o cronômetro.</p>
+  </section>
+
+  <section id="finishedScreen" class="hidden">
+    <h1>Tempo encerrado</h1>
+    <p id="finishedName"></p>
+    <p class="ok">Status: FINALIZADO</p>
   </section>
 </main>
 
 <script>
 const DB_BASE="https://quiz-herancas-itcmd-default-rtdb.firebaseio.com";
 const ROOT="quizHerancasV2";
+const COUNTDOWN_MS=2200;
+const COUNTDOWN_STEP=550;
+const GAME_DURATION=120000;
+
 let serverTimeOffset=0;
+let currentSession=null;
+let currentPlayer=null;
+let startedAt=null;
+let rafId=null;
 
 async function syncClock(){
   try{
@@ -77,30 +98,67 @@ async function patchJson(path,value){
   });
   if(!r.ok) throw new Error(`Erro de atualização (${r.status})`);
 }
-
 function makeId(prefix){
   return `${prefix}_${Math.round(now())}_${Math.random().toString(36).slice(2,8)}`;
 }
-
+function formatTime(ms){
+  const s=Math.max(0,Math.ceil(ms/1000));
+  return String(Math.floor(s/60)).padStart(2,"0")+":"+String(s%60).padStart(2,"0");
+}
+function show(id){
+  ["entry","countdownScreen","runningScreen","finishedScreen"].forEach(x=>document.getElementById(x).classList.add("hidden"));
+  document.getElementById(id).classList.remove("hidden");
+}
 async function getOrCreateSession(){
   let game=await getJson("game");
   if(game && game.sessionId) return game;
-
   const sessionId=makeId("session");
-  game={
-    version:"v2-clean",
-    sessionId,
-    status:"lobby",
-    createdAt:now()
-  };
-
+  game={version:"v2-clean",sessionId,status:"lobby",createdAt:now()};
   await putJson("game",game);
-  await putJson(`sessions/${sessionId}`,{
-    createdAt:now(),
-    status:"lobby"
-  });
-
+  await putJson(`sessions/${sessionId}`,{createdAt:now(),status:"lobby"});
   return game;
+}
+async function finalizePlayer(){
+  if(!currentSession||!currentPlayer)return;
+  const finishAt=startedAt+GAME_DURATION;
+  await patchJson(`sessions/${currentSession}/players/${currentPlayer}`,{
+    status:"finished",
+    finished:true,
+    finishedAt:finishAt
+  });
+  cancelAnimationFrame(rafId);
+  document.getElementById("finishedName").textContent=`${document.getElementById("runningName").textContent.replace("Corrida de ","")}, sua etapa de tempo foi concluída.`;
+  show("finishedScreen");
+}
+function runTimer(){
+  const remaining=startedAt+GAME_DURATION-now();
+  document.getElementById("timer").textContent=formatTime(remaining);
+  if(remaining<=0){
+    finalizePlayer();
+    return;
+  }
+  rafId=requestAnimationFrame(runTimer);
+}
+function runCountdown(name){
+  show("countdownScreen");
+  document.getElementById("countName").textContent=`Prepare-se, ${name}!`;
+  const startAt=startedAt;
+  const loop=()=>{
+    const left=startAt-now();
+    const el=document.getElementById("countdown");
+    if(left>COUNTDOWN_STEP*3)el.textContent="3";
+    else if(left>COUNTDOWN_STEP*2)el.textContent="2";
+    else if(left>COUNTDOWN_STEP)el.textContent="1";
+    else if(left>0)el.textContent="GO!";
+    else{
+      show("runningScreen");
+      document.getElementById("runningName").textContent=`Corrida de ${name}`;
+      runTimer();
+      return;
+    }
+    requestAnimationFrame(loop);
+  };
+  loop();
 }
 
 const nameInput=document.getElementById("playerName");
@@ -110,7 +168,6 @@ const statusEl=document.getElementById("status");
 joinBtn.addEventListener("click",async()=>{
   const name=nameInput.value.trim().replace(/\s+/g," ");
   statusEl.className="status";
-
   if(!name){
     statusEl.textContent="Digite seu nome.";
     statusEl.classList.add("bad");
@@ -128,24 +185,25 @@ joinBtn.addEventListener("click",async()=>{
   try{
     await syncClock();
     const game=await getOrCreateSession();
-    const playerId=makeId("player");
+    currentSession=game.sessionId;
+    currentPlayer=makeId("player");
+    startedAt=now()+COUNTDOWN_MS;
 
-    await putJson(`sessions/${game.sessionId}/players/${playerId}`,{
+    await putJson(`sessions/${currentSession}/players/${currentPlayer}`,{
       name,
       joinedAt:now(),
-      startedAt:null,
+      startedAt,
       hits:0,
       score:0,
       answeredCount:0,
       progress:0,
       finished:false,
       finishedAt:null,
-      status:"registered"
+      status:"countdown"
     });
 
-    document.getElementById("entry").classList.add("hidden");
-    document.getElementById("joined").classList.remove("hidden");
-    document.getElementById("welcome").textContent=`Olá, ${name}!`;
+    setTimeout(()=>patchJson(`sessions/${currentSession}/players/${currentPlayer}`,{status:"running"}),COUNTDOWN_MS+50);
+    runCountdown(name);
   }catch(err){
     statusEl.textContent="Não foi possível entrar: "+err.message;
     statusEl.className="status bad";
@@ -158,6 +216,7 @@ nameInput.addEventListener("keydown",e=>{
 });
 
 syncClock();
+setInterval(syncClock,30000);
 </script>
 </body>
 </html>
