@@ -7,7 +7,7 @@
   <link rel="stylesheet" href="style.css" />
 </head>
 <body class="player-page">
-  <main class="container">
+  <main id="participantApp" class="container">
     <div class="brand">
       <div><div class="eyebrow">QUIZ INTERATIVO</div><h1>Heranças, desigualdade e ITCMD</h1></div>
       <span class="badge" id="modeBadge">Modo demonstração</span>
@@ -54,10 +54,59 @@
     </section>
   </main>
 
+  <main id="presenterApp" class="container wide hidden presenter-shell">
+    <div class="race-copyright">Elaboração e organização: Rodolpho Moraes</div>
+    <header class="race-hero presenter-top">
+      <div>
+        <div class="eyebrow">MODO APRESENTADOR • QUIZ AO VIVO</div>
+        <h1>Heranças, desigualdade e ITCMD</h1>
+        <p class="subtitle">Tela única para projetar a corrida, ver quem está jogando e acompanhar a ordem de chegada.</p>
+      </div>
+      <div class="presenter-actions">
+        <button id="openParticipantBtn" class="soft-btn">Abrir link dos participantes</button>
+        <button id="fullscreenBtn" class="soft-btn">Tela cheia</button>
+        <button id="resetGameBtn" class="soft-btn danger">Iniciar nova partida</button>
+      </div>
+    </header>
+
+    <section class="scoreboard card">
+      <div class="scoreboard-item"><span>👥</span><div><strong id="onlineCount">0</strong><small>jogadores online</small></div></div>
+      <div class="scoreboard-item"><span>🏁</span><div><strong id="finishedCount">0</strong><small>finalizaram</small></div></div>
+      <div class="scoreboard-item"><span>❓</span><div><strong id="totalQuestions">6</strong><small>perguntas</small></div></div>
+    </section>
+
+    <section class="card presenter-roster-card">
+      <div class="players-now-heading"><strong>👀 Quem está jogando agora</strong><span id="status" class="mini">Aguardando Firebase</span></div>
+      <div id="presenterRoster" class="players-now-list"><span class="mini">Aguardando participantes...</span></div>
+    </section>
+
+    <section class="race-stage card">
+      <div class="stage-heading">
+        <div><span class="stage-kicker">CLASSIFICAÇÃO</span><h2>Corrida ao vivo</h2></div>
+        <div class="legend"><span>🚦 Largada</span><span>🏁 Chegada</span></div>
+      </div>
+      <div id="players" class="race-list"></div>
+    </section>
+
+    <section id="podiumSection" class="podium-section card hidden">
+      <div class="stage-heading"><div><span class="stage-kicker">DESTAQUES</span><h2 id="podiumTitle">Pódio provisório</h2></div></div>
+      <div id="podium" class="podium"></div>
+    </section>
+
+    <section id="arrivalSection" class="arrival-section card hidden">
+      <div class="stage-heading">
+        <div><span class="stage-kicker">LINHA DE CHEGADA</span><h2>Ordem de chegada</h2></div>
+        <span class="mini">Quem concluiu o quiz primeiro</span>
+      </div>
+      <div id="arrivalList" class="arrival-list"></div>
+    </section>
+  </main>
+
   <div id="countdownOverlay" class="countdown-overlay hidden" aria-live="assertive"><div class="countdown-card"><div class="countdown-kicker">PREPARE-SE</div><div id="countdownNumber" class="countdown-number">3</div><div class="countdown-sub">A corrida vai começar!</div></div></div>
 
   <script src="questions.js"></script>
   <script src="firebase-config.js"></script>
   <script type="module" src="app.js"></script>
+  <script type="module" src="presenter.js"></script>
 </body>
 </html>

@@ -1,4 +1,12 @@
+const isPresenterMode = new URLSearchParams(window.location.search).get('modo') === 'apresentador';
 const questions = window.QUIZ_QUESTIONS;
+if (isPresenterMode) {
+  const participant = document.getElementById('participantApp');
+  const presenter = document.getElementById('presenterApp');
+  participant?.classList.add('hidden');
+  presenter?.classList.remove('hidden');
+}
+
 const settings = window.FIREBASE_SETTINGS;
 const $ = (id) => document.getElementById(id);
 
@@ -7,6 +15,7 @@ let playerId = sessionStorage.getItem("quizPlayerId") || crypto.randomUUID();
 sessionStorage.setItem("quizPlayerId", playerId);
 let db = null, dbApi = null, playerRef = null, rosterUnsubscribe = null;
 
+if (!isPresenterMode) {
 $("scoreTotal").textContent = questions.length;
 function buildMarkers(){
   const el = $("trackMarkers"); if(!el) return;
@@ -94,3 +103,4 @@ function finish(){
 }
 $("restartBtn").addEventListener("click",()=>location.reload());window.addEventListener("resize",moveRunner);window.addEventListener("beforeunload",()=>{if(playerRef&&dbApi)dbApi.update(playerRef,{online:false,updatedAt:dbApi.serverTimestamp()})});
 await initFirebase();
+}

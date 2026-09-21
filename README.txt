@@ -1,3 +1,5 @@
+QUIZ — HERANÇAS, DESIGUALDADE E ITCMD — V7 SIMPLIFICADA
+
 QUIZ — HERANÇAS, DESIGUALDADE E ITCMD — V4 LÚDICA MULTIPLAYER
 
 Arquivos principais:
@@ -35,3 +37,12 @@ NOVIDADES DA V5
 - animação acelera visualmente quando há acerto e avanço na pista
 
 - corredor substituído pela imagem enviada pelo usuário (sem animação)
+
+
+V7:
+- site simplificado: mesma página para participante e apresentador
+- modo apresentador em index.html?modo=apresentador
+- race.html e admin.html redirecionam para o modo apresentador
+- botão de tela cheia
+- botão iniciar nova partida (limpa os jogadores do Firebase)
+- corredor refinado para ficar mais integrado à pista
