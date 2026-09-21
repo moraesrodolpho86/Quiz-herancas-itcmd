@@ -25,3 +25,4 @@ TESTE
 IMPORTANTE SOBRE SEGURANÇA
 O Firebase Realtime Database está atualmente em modo de teste, conforme configurado no console.
 Antes de disponibilizar o link de forma pública por longo período, substitua as regras de teste por regras adequadas ao jogo.
+Site publicado via GitHub Pages.
