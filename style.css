@@ -74,3 +74,7 @@ body:before{content:"";position:fixed;inset:0;pointer-events:none;opacity:.26;ba
 .runner-emoji,.emoji-lane-runner span,.podium-runner,.arrival-runner,.hero-icon{font-family:"Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif}
 @media(max-width:820px){.presenter-tools-grid{grid-template-columns:1fr}.question-results-grid{grid-template-columns:1fr}.accuracy-item{grid-template-columns:48px 1fr 100px}.accuracy-item span:last-child{grid-column:2/4}.summary-grid{grid-template-columns:1fr 1fr}}
 @media(max-width:540px){.summary-grid{grid-template-columns:1fr}.accuracy-item{grid-template-columns:42px 1fr}.accuracy-item span:nth-child(3),.accuracy-item span:nth-child(4){grid-column:2}.qr-card{text-align:center}.qr-box{margin:0 auto}}
+
+/* V11 — entretenimento em primeiro plano */
+.presenter-end-tools-label{margin:28px 4px 8px;font-size:12px;font-weight:900;letter-spacing:.13em;text-transform:uppercase;color:var(--muted)}
+.presenter-tools-grid{margin-top:0;margin-bottom:8px}

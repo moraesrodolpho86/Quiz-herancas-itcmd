@@ -89,9 +89,7 @@
       </div>
       <div class="presenter-actions">
         <button id="startGameBtn" class="soft-btn primary">Iniciar partida</button>
-        <button id="endGameBtn" class="soft-btn warn">Encerrar partida</button>
         <button id="fullscreenBtn" class="soft-btn">Tela cheia</button>
-        <button id="copyLinkBtn" class="soft-btn">Copiar link</button>
         <button id="resetGameBtn" class="soft-btn danger">Nova Partida</button>
       </div>
     </header>
@@ -107,22 +105,6 @@
       <div id="presenterRoster" class="players-now-list"><span class="mini">Aguardando participantes...</span></div>
     </section>
 
-    <section class="presenter-tools-grid">
-      <div class="card qr-card">
-        <div><span class="stage-kicker">ENTRADA</span><h2>QR Code dos participantes</h2></div>
-        <div id="participantQr" class="qr-box"></div>
-        <div id="participantUrl" class="mini url-mini"></div>
-      </div>
-      <div class="card summary-card">
-        <div><span class="stage-kicker">RESUMO</span><h2>Estatísticas da partida</h2></div>
-        <div class="summary-grid">
-          <div><strong id="summaryPlayers">0</strong><span>participantes</span></div>
-          <div><strong id="summaryAverage">0,0</strong><span>média de acertos</span></div>
-          <div><strong id="summaryBest">—</strong><span>questão mais acertada</span></div>
-          <div><strong id="summaryHardest">—</strong><span>questão mais difícil</span></div>
-        </div>
-      </div>
-    </section>
 
     <section class="race-stage card">
       <div class="stage-heading">
@@ -145,13 +127,6 @@
       <div id="accuracyList" class="accuracy-list"></div>
     </section>
 
-    <section id="questionResultsSection" class="question-results-section card hidden">
-      <div class="stage-heading">
-        <div><span class="stage-kicker">RESPOSTAS</span><h2>Resultado por questão</h2></div>
-        <span class="mini">Distribuição das alternativas marcadas</span>
-      </div>
-      <div id="questionResults" class="question-results-grid"></div>
-    </section>
 
     <section id="arrivalSection" class="arrival-section card hidden">
       <div class="stage-heading">
@@ -160,6 +135,25 @@
       </div>
       <div id="arrivalList" class="arrival-list"></div>
     </section>
+
+    <div class="presenter-end-tools-label">Informações complementares</div>
+    <section class="presenter-tools-grid">
+      <div class="card qr-card">
+        <div><span class="stage-kicker">ENTRADA</span><h2>QR Code dos participantes</h2></div>
+        <div id="participantQr" class="qr-box"></div>
+        <div id="participantUrl" class="mini url-mini"></div>
+      </div>
+      <div class="card summary-card">
+        <div><span class="stage-kicker">RESUMO</span><h2>Estatísticas da partida</h2></div>
+        <div class="summary-grid">
+          <div><strong id="summaryPlayers">0</strong><span>participantes</span></div>
+          <div><strong id="summaryAverage">0,0</strong><span>média de acertos</span></div>
+          <div><strong id="summaryBest">—</strong><span>questão mais acertada</span></div>
+          <div><strong id="summaryHardest">—</strong><span>questão mais difícil</span></div>
+        </div>
+      </div>
+    </section>
+
   </main>
 
   <div id="countdownOverlay" class="countdown-overlay hidden" aria-live="assertive"><div class="countdown-card"><div class="countdown-kicker">PREPARE-SE</div><div id="countdownNumber" class="countdown-number">3</div><div class="countdown-sub">A corrida vai começar!</div></div></div>

@@ -37,3 +37,13 @@ V10:
 - ordem de chegada separada
 - estatísticas e resultados por questão
 - feedback curto mantido
+
+V11:
+- removido o botão "Encerrar partida"
+- QR Code e estatísticas movidos para o final da página do apresentador
+- removida a seção "Resultado por questão"
+- corrida, pódio e ordem de chegada permanecem em primeiro plano
+
+V12:
+- removido o botão Copiar link do modo apresentador
+- mantido apenas o QR Code para acesso dos participantes

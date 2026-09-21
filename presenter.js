@@ -55,12 +55,9 @@ if (isPresenter) {
   const arrivalList = document.getElementById("arrivalList");
   const rosterEl = document.getElementById("presenterRoster");
   const startGameBtn = document.getElementById("startGameBtn");
-  const endGameBtn = document.getElementById("endGameBtn");
   const accuracySection = document.getElementById("accuracySection");
   const accuracyList = document.getElementById("accuracyList");
   const accuracyTitle = document.getElementById("accuracyTitle");
-  const questionResultsSection = document.getElementById("questionResultsSection");
-  const questionResultsEl = document.getElementById("questionResults");
   const summaryPlayers = document.getElementById("summaryPlayers");
   const summaryAverage = document.getElementById("summaryAverage");
   const summaryBest = document.getElementById("summaryBest");
@@ -161,16 +158,6 @@ if (isPresenter) {
     });
   }
 
-  function renderQuestionResults(all){
-    const stats=responseStats(all);
-    const hasAny=stats.some(s=>s.totalAnswers>0);
-    questionResultsSection.classList.toggle('hidden',!hasAny);
-    if(!hasAny){ questionResultsEl.innerHTML=''; return; }
-    questionResultsEl.innerHTML=stats.map((s,qi)=>{
-      const max=Math.max(1,s.totalAnswers);
-      return `<div class="question-result-card"><div class="question-result-head"><strong>Questão ${qi+1}</strong><span>${s.totalAnswers} respostas • ${Math.round(s.rate*100)}% acerto</span></div>${['A','B','C','D'].map((l,i)=>`<div class="answer-bar-row"><span>${l}</span><div class="answer-bar"><i style="width:${Math.round(s.counts[i]/max*100)}%"></i></div><b>${s.counts[i]}</b></div>`).join('')}</div>`;
-    }).join('');
-  }
 
   function renderSummary(all){
     summaryPlayers.textContent=all.length;
@@ -191,10 +178,6 @@ if (isPresenter) {
     if(box && window.QRCode){ box.innerHTML=''; new QRCode(box,{text:url,width:150,height:150,correctLevel:QRCode.CorrectLevel.M}); }
   }
   buildQr();
-  document.getElementById('copyLinkBtn')?.addEventListener('click', async ()=>{
-    const url=window.location.origin+window.location.pathname;
-    try{ await navigator.clipboard.writeText(url); const b=document.getElementById('copyLinkBtn'); const old=b.textContent; b.textContent='Link copiado!'; setTimeout(()=>b.textContent=old,1400); }catch(e){ window.prompt('Copie o link:',url); }
-  });
 
   document.getElementById('fullscreenBtn')?.addEventListener('click', async ()=>{
     if(!document.fullscreenElement){ await document.documentElement.requestFullscreen?.(); }
@@ -227,11 +210,6 @@ if (isPresenter) {
       await dbMod.update(gameRef,{status:'started',updatedAt:dbMod.serverTimestamp()});
     });
 
-    endGameBtn?.addEventListener('click', async ()=>{
-      const ok=window.confirm('Deseja encerrar a partida e congelar os resultados atuais?');
-      if(!ok) return;
-      await dbMod.update(gameRef,{status:'ended',endedAt:dbMod.serverTimestamp(),updatedAt:dbMod.serverTimestamp()});
-    });
 
     document.getElementById('resetGameBtn')?.addEventListener('click', async ()=>{
       const ok = window.confirm('Deseja iniciar uma nova partida? Isso limpará os jogadores e resultados atuais.');
@@ -239,7 +217,6 @@ if (isPresenter) {
       await dbMod.remove(playersRef);
       await dbMod.set(gameRef,{status:'waiting',startToken:null,updatedAt:dbMod.serverTimestamp()});
       startGameBtn.disabled = false;
-      endGameBtn.disabled = true;
     });
 
     dbMod.onValue(gameRef, snap=>{
@@ -253,11 +230,9 @@ if (isPresenter) {
       } else if(game.status==='started'){
         startGameBtn.disabled = true;
         startGameBtn.textContent = 'Partida em andamento';
-        endGameBtn.disabled = false;
       } else if(game.status==='ended'){
         startGameBtn.disabled = true;
         startGameBtn.textContent = 'Partida encerrada';
-        endGameBtn.disabled = true;
       }
     });
 
@@ -275,7 +250,6 @@ if (isPresenter) {
       renderPodium(ranked, allOnlineFinished);
       renderArrivals(all);
       renderAccuracy(all, allOnlineFinished);
-      renderQuestionResults(all);
       renderSummary(all);
     });
     }
