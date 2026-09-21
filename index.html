@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Quiz Heranças — Etapa 6</title>
+<title>Quiz Heranças — Etapa 7</title>
 <style>
 *{box-sizing:border-box}
 body{margin:0;min-height:100vh;background:#0b1630;color:#fff;font-family:Arial,sans-serif;padding:18px;display:grid;place-items:center}
@@ -38,6 +38,8 @@ button{font-family:inherit}
 .stat{background:#0f1a33;border:1px solid #607399;padding:8px 10px;font-weight:700}
 .final{text-align:center}
 .final strong{color:#63df95}
+.waiting-note{margin-top:12px;color:#c8d1e6;font-size:13px;line-height:1.4}
+.bonus-badge{display:inline-block;background:#ffd34d;color:#111;font-weight:900;padding:5px 8px;margin-bottom:10px}
 </style>
 </head>
 <body>
@@ -82,13 +84,27 @@ button{font-family:inherit}
   <p id="finishReason"></p>
   <p>Acertos: <strong id="finalHits">0</strong>/8</p>
   <p>Pontuação: <strong id="finalScore">0</strong></p>
+  <p>Tempo: <strong id="finalTime">00:00</strong></p>
+  <p class="waiting-note">Resultado registrado. Se houver empate técnico, a pergunta bônus aparecerá automaticamente.</p>
+</section>
+
+<section id="bonusScreen" class="hidden">
+  <div class="bonus-badge">PERGUNTA BÔNUS / DESEMPATE</div>
+  <div class="topbar">
+    <div class="pill" id="bonusPlayerLabel">Jogador</div>
+    <div class="pill qtimer">QUESTÃO: <span id="bonusTimer">15</span>s</div>
+  </div>
+  <div class="question" id="bonusQuestionText"></div>
+  <div class="answers" id="bonusAnswers"></div>
+  <div class="feedback" id="bonusFeedback"></div>
+  <div class="explanation" id="bonusExplanation"></div>
 </section>
 </main>
 
 <script>
 const DB_BASE="https://quiz-herancas-itcmd-default-rtdb.firebaseio.com";
 const ROOT="quizHerancasV2";
-const VERSION="v2-stage6";
+const VERSION="v2-stage7";
 const COUNTDOWN_MS=2200;
 const COUNTDOWN_STEP=550;
 const GAME_DURATION=120000;
@@ -98,7 +114,7 @@ const BONUS_QUESTION={"question":"Em 2019, segundo apresentação, qual parcela 
 
 let serverTimeOffset=0,currentSession=null,currentPlayer=null,playerName="";
 let startedAt=0,questionIndex=0,hits=0,score=0,answered=0;
-let answerLocked=false,questionStartedAt=0,qTimer=null,rafId=null,finished=false;
+let answerLocked=false,questionStartedAt=0,qTimer=null,rafId=null,finished=false,finishElapsedMs=0,bonusPoll=null,bonusActive=false;
 
 async function syncClock(){
   try{
@@ -126,7 +142,7 @@ async function patchJson(path,value){
   if(!r.ok)throw new Error(`Atualização ${r.status}`);
 }
 function show(id){
-  ["entry","countdownScreen","quizScreen","finishedScreen"].forEach(x=>document.getElementById(x).classList.add("hidden"));
+  ["entry","countdownScreen","quizScreen","finishedScreen","bonusScreen"].forEach(x=>document.getElementById(x).classList.add("hidden"));
   document.getElementById(id).classList.remove("hidden");
 }
 async function getOrCreateSession(){
@@ -154,20 +170,117 @@ async function finishGame(reason){
   finished=true;
   clearInterval(qTimer);
   cancelAnimationFrame(rafId);
-  const finishAt=now();
+
+  const finishAt=reason==="time" ? startedAt+GAME_DURATION : now();
+  finishElapsedMs=Math.max(0,Math.min(GAME_DURATION,finishAt-startedAt));
+
   await syncPlayer({
     status:"finished",
     finished:true,
     finishedAt:finishAt,
     finishReason:reason,
+    elapsedMs:finishElapsedMs,
+    elapsedSec:Math.round(finishElapsedMs/1000),
+    regularFinished:true,
+    regularFinishedAt:finishAt,
     hits,score,answeredCount:answered,
-    progress:1
+    progress:1,
+    bonusRequired:false,
+    bonusAnswered:false
   });
+
   document.getElementById("finalHits").textContent=hits;
   document.getElementById("finalScore").textContent=score;
+  document.getElementById("finalTime").textContent=formatTime(finishElapsedMs);
   document.getElementById("finishReason").textContent=reason==="questions"?"Você respondeu as 8 perguntas.":"O tempo de 2 minutos foi encerrado.";
   show("finishedScreen");
+  startBonusWatcher();
 }
+
+function startBonusWatcher(){
+  clearInterval(bonusPoll);
+  bonusPoll=setInterval(async()=>{
+    if(!currentSession||!currentPlayer||bonusActive)return;
+    try{
+      const p=await getJson(`sessions/${currentSession}/players/${currentPlayer}`);
+      if(p && p.bonusRequired===true && p.bonusAnswered!==true){
+        clearInterval(bonusPoll);
+        showBonusQuestion();
+      }
+    }catch(e){}
+  },700);
+}
+
+function showBonusQuestion(){
+  bonusActive=true;
+  answerLocked=false;
+  show("bonusScreen");
+  document.getElementById("bonusPlayerLabel").textContent=playerName;
+  document.getElementById("bonusQuestionText").textContent=BONUS_QUESTION.question;
+  document.getElementById("bonusFeedback").textContent="";
+  document.getElementById("bonusFeedback").className="feedback";
+  document.getElementById("bonusExplanation").textContent="";
+
+  const holder=document.getElementById("bonusAnswers");
+  holder.innerHTML="";
+  BONUS_QUESTION.answers.forEach((text,i)=>{
+    const b=document.createElement("button");
+    b.className="answer";
+    b.textContent=`${String.fromCharCode(65+i)}. ${text}`;
+    b.onclick=()=>answerBonus(i,b);
+    holder.appendChild(b);
+  });
+
+  let left=QUESTION_SECONDS;
+  questionStartedAt=performance.now();
+  document.getElementById("bonusTimer").textContent=left;
+  qTimer=setInterval(()=>{
+    left--;
+    document.getElementById("bonusTimer").textContent=Math.max(0,left);
+    if(left<=0){clearInterval(qTimer);answerBonus(-1,null)}
+  },1000);
+}
+
+async function answerBonus(choice,clicked){
+  if(answerLocked)return;
+  answerLocked=true;
+  clearInterval(qTimer);
+
+  const buttons=[...document.querySelectorAll("#bonusAnswers .answer")];
+  buttons.forEach(b=>b.disabled=true);
+  buttons[BONUS_QUESTION.correct].classList.add("correct");
+
+  const correct=choice===BONUS_QUESTION.correct;
+  if(correct){
+    if(clicked)clicked.classList.add("correct");
+    document.getElementById("bonusFeedback").textContent="CORRETO!";
+    document.getElementById("bonusFeedback").className="feedback ok";
+  }else{
+    if(clicked)clicked.classList.add("wrong");
+    document.getElementById("bonusFeedback").textContent="INCORRETO!";
+    document.getElementById("bonusFeedback").className="feedback bad";
+  }
+
+  const responseMs=Math.max(0,Math.round(performance.now()-questionStartedAt));
+  const letter=String.fromCharCode(65+BONUS_QUESTION.correct);
+  document.getElementById("bonusExplanation").textContent=`Alternativa correta: ${letter}. ${BONUS_QUESTION.answers[BONUS_QUESTION.correct]}`;
+
+  await syncPlayer({
+    bonusRequired:false,
+    bonusAnswered:true,
+    bonusCorrect:correct,
+    bonusResponseMs:responseMs,
+    bonusAnswer:choice,
+    status:"finished"
+  });
+
+  setTimeout(()=>{
+    bonusActive=false;
+    document.getElementById("finishReason").textContent="Desempate concluído.";
+    show("finishedScreen");
+  },2200);
+}
+
 function runGameClock(){
   if(finished)return;
   const remaining=startedAt+GAME_DURATION-now();

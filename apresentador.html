@@ -22,17 +22,22 @@ button{padding:10px 16px;font-weight:800;border:0;background:#ffd34d;color:#111;
 .empty{color:#c8d1e6;border:1px dashed #607399;padding:16px}
 .small{font-size:12px;color:#c8d1e6}
 .bad{color:#ff8585}
+.rankpos{font-weight:900;color:#ffd34d}.bonus{color:#ffb3ff;font-weight:800}
 @media(max-width:800px){.player{grid-template-columns:1fr 1fr}}
 </style>
 </head>
 <body>
 <main class="wrap">
 <section class="panel">
-  <h1>Modo apresentador — Etapa 6</h1>
-  <div class="meta">8 perguntas • 15 segundos por questão • cronômetro individual de 2 minutos</div>
+  <h1>Modo apresentador — Etapa 7</h1>
+  <div class="meta">Ranking ao vivo • desempate automático • ordem de chegada</div>
   <button id="newSessionBtn">NOVA PARTIDA</button>
   <div id="count" class="count">Jogadores: 0</div>
-  <div id="players" class="list"><div class="empty">Aguardando jogadores...</div></div>
+  <div class="small" style="margin-bottom:8px">Critério do ranking: mais acertos; em caso de empate, menor tempo de conclusão (em segundos). Persistindo o empate, usa-se a pergunta bônus.</div>
+  <h3>RANKING AO VIVO</h3>
+  <div id="ranking" class="list"><div class="empty">Aguardando jogadores...</div></div>
+  <h3 style="margin-top:18px">ORDEM DE CHEGADA</h3>
+  <div id="arrivals" class="list"><div class="empty">Aguardando chegadas...</div></div>
   <div id="error" class="small"></div>
 </section>
 </main>
@@ -40,7 +45,7 @@ button{padding:10px 16px;font-weight:800;border:0;background:#ffd34d;color:#111;
 <script>
 const DB_BASE="https://quiz-herancas-itcmd-default-rtdb.firebaseio.com";
 const ROOT="quizHerancasV2";
-const VERSION="v2-stage6";
+const VERSION="v2-stage7";
 const GAME_DURATION=120000;
 let serverTimeOffset=0;
 
@@ -77,49 +82,132 @@ async function newSession(){
  await putJson(`sessions/${sessionId}`,{createdAt:now(),status:"lobby"});
  refresh();
 }
+async function ensureBonusFlags(sessionId,players){
+  const finished=players.filter(p=>p.finished===true && Number.isFinite(Number(p.elapsedSec)));
+  const groups={};
+  for(const p of finished){
+    const key=`${Number(p.hits||0)}|${Number(p.elapsedSec||0)}`;
+    (groups[key]??=[]).push(p);
+  }
+
+  for(const group of Object.values(groups)){
+    if(group.length<2) continue;
+
+    const unresolved=group.filter(p=>p.bonusAnswered!==true);
+    if(!unresolved.length) continue;
+
+    for(const p of unresolved){
+      if(p.bonusRequired!==true){
+        await patchJson(`sessions/${sessionId}/players/${p.id}`,{bonusRequired:true});
+        p.bonusRequired=true;
+      }
+    }
+  }
+}
+
+function rankingComparator(a,b){
+  const hitsDiff=Number(b.hits||0)-Number(a.hits||0);
+  if(hitsDiff!==0)return hitsDiff;
+
+  const ta=Number.isFinite(Number(a.elapsedSec))?Number(a.elapsedSec):999999;
+  const tb=Number.isFinite(Number(b.elapsedSec))?Number(b.elapsedSec):999999;
+  if(ta!==tb)return ta-tb;
+
+  // desempate pela pergunta bônus
+  const ba=a.bonusAnswered===true?1:0, bb=b.bonusAnswered===true?1:0;
+  if(ba!==bb)return bb-ba;
+
+  const ca=a.bonusCorrect===true?1:0, cb=b.bonusCorrect===true?1:0;
+  if(ca!==cb)return cb-ca;
+
+  const ra=Number.isFinite(Number(a.bonusResponseMs))?Number(a.bonusResponseMs):999999;
+  const rb=Number.isFinite(Number(b.bonusResponseMs))?Number(b.bonusResponseMs):999999;
+  if(ra!==rb)return ra-rb;
+
+  return String(a.name||"").localeCompare(String(b.name||""));
+}
+
 async function refresh(){
  try{
   const game=await getJson("game");
   if(!game||!game.sessionId||game.version!==VERSION){
     document.getElementById("count").textContent="Jogadores: 0";
-    document.getElementById("players").innerHTML='<div class="empty">Clique em NOVA PARTIDA para iniciar a Etapa 6.</div>';
+    document.getElementById("ranking").innerHTML='<div class="empty">Clique em NOVA PARTIDA para iniciar a Etapa 7.</div>';
+    document.getElementById("arrivals").innerHTML='<div class="empty">Aguardando chegadas...</div>';
     return;
   }
+
   const sid=game.sessionId;
   const raw=await getJson(`sessions/${sid}/players`)||{};
-  const players=Object.entries(raw).map(([id,p])=>({id,...p})).sort((a,b)=>(a.joinedAt||0)-(b.joinedAt||0));
+  const players=Object.entries(raw).map(([id,p])=>({id,...p}));
 
   for(const p of players){
     if(!p.finished&&p.startedAt&&now()>=p.startedAt+GAME_DURATION){
-      p.finished=true;p.status="finished";p.finishedAt=p.startedAt+GAME_DURATION;
-      await patchJson(`sessions/${sid}/players/${p.id}`,{finished:true,status:"finished",finishedAt:p.finishedAt,finishReason:"time"});
+      const finishedAt=p.startedAt+GAME_DURATION;
+      const elapsedMs=GAME_DURATION;
+      p.finished=true;p.status="finished";p.finishedAt=finishedAt;p.elapsedMs=elapsedMs;p.elapsedSec=120;
+      await patchJson(`sessions/${sid}/players/${p.id}`,{
+        finished:true,status:"finished",finishedAt,finishReason:"time",
+        elapsedMs,elapsedSec:120,regularFinished:true,regularFinishedAt:finishedAt
+      });
     }
   }
 
+  await ensureBonusFlags(sid,players);
+
   document.getElementById("count").textContent=`Jogadores: ${players.length}`;
+
   if(!players.length){
-    document.getElementById("players").innerHTML='<div class="empty">Aguardando jogadores...</div>';
-  }else{
-    document.getElementById("players").innerHTML=players.map(p=>{
-      let label="CONTAGEM",cls="yellow",time="02:00";
-      if(p.finished){label="FINALIZADO";cls="blue";time="00:00"}
-      else if(p.startedAt&&now()>=p.startedAt){label="EM JOGO";cls="green";time=formatTime(p.startedAt+GAME_DURATION-now())}
-      const q=Math.min(8,Number(p.answeredCount||0));
-      return `<div class="player">
-        <strong>${esc(p.name||"Sem nome")}</strong>
-        <span class="status ${cls}">${label}</span>
-        <span>Q: <b>${q}/8</b></span>
-        <span>Acertos: <b>${Number(p.hits||0)}</b></span>
-        <span class="mono">${time} • ${Number(p.score||0)} pts</span>
-      </div>`;
-    }).join("");
+    document.getElementById("ranking").innerHTML='<div class="empty">Aguardando jogadores...</div>';
+    document.getElementById("arrivals").innerHTML='<div class="empty">Aguardando chegadas...</div>';
+    return;
   }
+
+  const ranked=[...players].sort(rankingComparator);
+
+  document.getElementById("ranking").innerHTML=ranked.map((p,i)=>{
+    let label="CONTAGEM",cls="yellow",time="02:00";
+    if(p.finished){
+      label=p.bonusRequired===true?"DESEMPATE":(p.bonusAnswered===true?"FINALIZADO + BÔNUS":"FINALIZADO");
+      cls=p.bonusRequired===true?"yellow":"blue";
+      time=formatTime(Number(p.elapsedMs||0));
+    }else if(p.startedAt&&now()>=p.startedAt){
+      label="EM JOGO";cls="green";time=formatTime(p.startedAt+GAME_DURATION-now());
+    }
+    const q=Math.min(8,Number(p.answeredCount||0));
+    const bonusInfo=p.bonusAnswered===true
+      ? `<span class="bonus">Bônus: ${p.bonusCorrect===true?"✓":"✗"}</span>`
+      : "";
+    return `<div class="player">
+      <span class="rankpos">${i+1}º</span>
+      <strong>${esc(p.name||"Sem nome")}</strong>
+      <span class="status ${cls}">${label}</span>
+      <span>Acertos: <b>${Number(p.hits||0)}</b> • Q ${q}/8</span>
+      <span class="mono">${time} • ${Number(p.score||0)} pts ${bonusInfo}</span>
+    </div>`;
+  }).join("");
+
+  const arrivals=players
+    .filter(p=>p.finished&&p.finishedAt)
+    .sort((a,b)=>Number(a.finishedAt)-Number(b.finishedAt));
+
+  document.getElementById("arrivals").innerHTML=arrivals.length
+    ? arrivals.map((p,i)=>`<div class="player">
+        <span class="rankpos">${i+1}º</span>
+        <strong>${esc(p.name||"Sem nome")}</strong>
+        <span class="status blue">CHEGOU</span>
+        <span>Acertos: <b>${Number(p.hits||0)}</b></span>
+        <span class="mono">${formatTime(Number(p.elapsedMs||0))}</span>
+      </div>`).join("")
+    : '<div class="empty">Aguardando chegadas...</div>';
+
   document.getElementById("error").textContent="";
  }catch(err){
   document.getElementById("error").textContent="Erro: "+err.message;
   document.getElementById("error").className="small bad";
  }
 }
+
 document.getElementById("newSessionBtn").onclick=newSession;
 syncClock().then(refresh);setInterval(syncClock,30000);setInterval(refresh,500);
 </script>
