@@ -16,9 +16,17 @@
     <section id="joinScreen" class="card center join-card">
       <div class="hero-icon">🏃</div>
       <h2>Entre na corrida!</h2>
-      <p class="subtitle">Escolha duas iniciais. A cada resposta correta, seu corredor avança na pista.</p>
+      <p class="subtitle">Escolha duas iniciais. Você avança uma etapa a cada pergunta respondida.</p>
       <div class="initials"><input id="initials" maxlength="2" autocomplete="off" placeholder="RM" aria-label="Duas iniciais" /><button id="joinBtn">ENTRAR NA CORRIDA</button></div>
       <div class="join-notes"><span>📱 Sem aplicativo</span><span>⚡ Atualização ao vivo</span><span>🏁 6 etapas</span></div>
+    </section>
+
+    <section id="waitingScreen" class="card center hidden waiting-card">
+      <div class="hero-icon">🏃</div>
+      <h2>Você está na largada!</h2>
+      <p class="subtitle">Aguarde o apresentador iniciar a partida.</p>
+      <div class="waiting-player"><span>Seu corredor:</span><strong id="waitingInitials">--</strong></div>
+      <div class="waiting-pulse"><span></span><span></span><span></span></div>
     </section>
 
     <section id="quizScreen" class="card hidden">
@@ -35,7 +43,7 @@
         <div class="race-title"><span>🚦 LARGADA</span><span id="personalScore">0 acertos</span><span>CHEGADA 🏁</span></div>
         <div class="track" id="track">
           <div class="track-markers" id="trackMarkers"></div>
-          <div class="runner" id="runner"><img class="runner-img" src="runner.png" alt="Corredor" aria-hidden="true"><span class="runner-label" id="runnerLabel"></span></div>
+          <div class="runner emoji-runner" id="runner"><span class="runner-emoji" aria-hidden="true">🏃</span><span class="runner-label" id="runnerLabel"></span></div>
         </div>
       </div>
 
@@ -54,18 +62,32 @@
     </section>
   </main>
 
+  <main id="presenterAuth" class="container hidden presenter-auth-shell">
+    <section class="card center presenter-auth-card">
+      <div class="hero-icon">🔐</div>
+      <div class="eyebrow">ACESSO DO APRESENTADOR</div>
+      <h1>Modo apresentador</h1>
+      <p class="subtitle">Digite o PIN de 4 dígitos para acessar os controles da partida.</p>
+      <div class="presenter-pin-row">
+        <input id="presenterPin" type="password" inputmode="numeric" maxlength="4" autocomplete="off" placeholder="••••" aria-label="PIN do apresentador">
+        <button id="presenterLoginBtn">ENTRAR</button>
+      </div>
+      <p id="presenterPinError" class="pin-error hidden">PIN incorreto.</p>
+      <a class="back-to-game" href="index.html">Voltar para o jogo</a>
+    </section>
+  </main>
+
   <main id="presenterApp" class="container wide hidden presenter-shell">
-    <div class="race-copyright">Elaboração e organização: Rodolpho Moraes</div>
+    <div class="race-copyright">© 2026 Rodolpho Moraes</div>
     <header class="race-hero presenter-top">
       <div>
         <div class="eyebrow">MODO APRESENTADOR • QUIZ AO VIVO</div>
         <h1>Heranças, desigualdade e ITCMD</h1>
-        <p class="subtitle">Tela única para projetar a corrida, ver quem está jogando e acompanhar a ordem de chegada.</p>
       </div>
       <div class="presenter-actions">
-        <button id="openParticipantBtn" class="soft-btn">Abrir link dos participantes</button>
+        <button id="startGameBtn" class="soft-btn primary">Iniciar partida</button>
         <button id="fullscreenBtn" class="soft-btn">Tela cheia</button>
-        <button id="resetGameBtn" class="soft-btn danger">Iniciar nova partida</button>
+        <button id="resetGameBtn" class="soft-btn danger">Nova Partida</button>
       </div>
     </header>
 

@@ -1,48 +1,24 @@
-QUIZ — HERANÇAS, DESIGUALDADE E ITCMD — V7 SIMPLIFICADA
+QUIZ — HERANÇAS, DESIGUALDADE E ITCMD — V9 COM PIN DO APRESENTADOR
 
-QUIZ — HERANÇAS, DESIGUALDADE E ITCMD — V4 LÚDICA MULTIPLAYER
+QUIZ — HERANÇAS, DESIGUALDADE E ITCMD — V8
 
-Arquivos principais:
-- index.html : jogo dos participantes
-- race.html : corrida ao vivo para projetar
-- admin.html : painel do apresentador
+Acesso
+- Participantes: index.html
+- Apresentador: index.html?modo=apresentador
 
-NOVIDADES DA V3
-- pista de corrida visual em cada participante
-- corredor simples como mascote
-- classificação automática (1º, 2º, 3º...)
-- contador de jogadores online e finalizados
-- progresso em acertos e percentual
-- pódio provisório e pódio final
-- animação de avanço do corredor
-- identidade visual mais colorida e lúdica
-- melhorias também na tela do participante e painel do apresentador
-
-ATUALIZAÇÃO NO GITHUB
-Substitua os arquivos do repositório pelos desta versão e faça um commit na branch main.
-O GitHub Pages fará novo deploy automaticamente.
+Novidades da V8
+- corredor voltou a ser o emoji 🏃
+- participantes entram e aguardam na largada
+- botão Iniciar partida no modo apresentador
+- contagem regressiva sincronizada 3, 2, 1 antes da primeira pergunta
+- botão Nova Partida limpa jogadores e resultados
+- corredor avança a cada pergunta respondida, independentemente de acerto
+- ao responder todas as perguntas, o corredor cruza a linha de chegada
+- ranking por acertos continua separado da ordem de chegada
 
 
-NOVIDADES DA V4
-- texto no topo da corrida: Elaboração e organização: Rodolpho Moraes
-- mensagem final: “Parabéns, você é um amigo”
-- lista de jogadores online no celular
-- ordem de chegada dos participantes na tela projetada
-
-
-NOVIDADES DA V5
-- contagem regressiva 3-2-1-VAI somente antes da primeira pergunta
-- participante segue para a próxima pergunta por conta própria
-- corredor redesenhado em CSS com animação contínua de braços/pernas
-- animação acelera visualmente quando há acerto e avanço na pista
-
-- corredor substituído pela imagem enviada pelo usuário (sem animação)
-
-
-V7:
-- site simplificado: mesma página para participante e apresentador
-- modo apresentador em index.html?modo=apresentador
-- race.html e admin.html redirecionam para o modo apresentador
-- botão de tela cheia
-- botão iniciar nova partida (limpa os jogadores do Firebase)
-- corredor refinado para ficar mais integrado à pista
+V9:
+- acesso ao modo apresentador protegido por PIN de 4 dígitos: 1234
+- autorização mantida apenas na sessão do navegador
+- subtítulo explicativo removido do modo apresentador
+- autoria no canto superior direito: © 2026 Rodolpho Moraes
