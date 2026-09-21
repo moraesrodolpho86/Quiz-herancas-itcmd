@@ -195,6 +195,10 @@ if (isPresenter) {
     const playersRef = dbMod.ref(db, 'players');
     const gameRef = dbMod.ref(db, 'game');
     statusEl.textContent = '🟢 Conectado';
+    const initialGameSnap = await dbMod.get(gameRef);
+    if(!initialGameSnap.exists()){
+      await dbMod.set(gameRef,{status:'waiting',startToken:null,updatedAt:dbMod.serverTimestamp()});
+    }
 
     startGameBtn?.addEventListener('click', async ()=>{
       const snap = await dbMod.get(playersRef);
@@ -230,9 +234,6 @@ if (isPresenter) {
       } else if(game.status==='started'){
         startGameBtn.disabled = true;
         startGameBtn.textContent = 'Partida em andamento';
-      } else if(game.status==='ended'){
-        startGameBtn.disabled = true;
-        startGameBtn.textContent = 'Partida encerrada';
       }
     });
 

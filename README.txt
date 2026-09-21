@@ -47,3 +47,9 @@ V11:
 V12:
 - removido o botão Copiar link do modo apresentador
 - mantido apenas o QR Code para acesso dos participantes
+
+V13 — restauração da largada sincronizada:
+- botão "Iniciar partida" restaurado/garantido no modo apresentador
+- participante permanece na tela de largada após entrar
+- somente uma nova contagem 3, 2, 1 disparada pelo apresentador libera a primeira pergunta
+- estado antigo "partida em andamento" não faz um novo participante pular a largada

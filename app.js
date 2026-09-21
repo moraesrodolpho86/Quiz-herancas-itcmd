@@ -103,8 +103,11 @@ if (!isPresenterMode) {
       });
       const gameSnap = await dbApi.get(dbApi.ref(db,"game"));
       const game = gameSnap.val() || {};
-      handleGameState(game);
+      // Ao entrar, o participante permanece na largada. Ele só inicia com uma NOVA
+      // contagem regressiva disparada pelo apresentador após sua entrada.
+      lastStartToken = game.startToken || null;
     } else {
+      // Modo demonstração: mantém o fluxo local para permitir teste sem Firebase.
       await startCountdown();
       startQuiz();
     }
@@ -141,10 +144,6 @@ if (!isPresenterMode) {
     if(gameStartedLocally) return;
     if(status === 'countdown' && token && token !== lastStartToken){
       lastStartToken = token;
-      await startCountdown();
-      if(!gameStartedLocally) startQuiz();
-    } else if(status === 'started' && !gameStartedLocally){
-      // Para quem entrar depois do início, ainda há uma única contagem antes da 1ª pergunta.
       await startCountdown();
       if(!gameStartedLocally) startQuiz();
     }
