@@ -7,15 +7,15 @@
 <style>
 *{box-sizing:border-box}
 html,body{margin:0;width:100%;height:100%;overflow:hidden}
-body{background:#0b1630;color:#fff;font-family:"Courier New",monospace}
+body{background:#0b1630;color:#fff;font-family:"Courier New",monospace;display:flex;align-items:flex-start;justify-content:center;padding-top:76px}
 #gameCanvas{position:fixed;inset:0;width:100%;height:100%;image-rendering:pixelated;z-index:0}
-#visualTitle{position:fixed;top:14px;left:50%;transform:translateX(-50%);z-index:2;
+#visualTitle{position:fixed;top:14px;left:50%;transform:translateX(-50%);z-index:4;
   background:#0f1a33;border:3px solid #fff;padding:8px 16px;font-weight:900;
   letter-spacing:1px;text-align:center;box-shadow:5px 5px 0 #111;white-space:nowrap}
 #copyright{position:fixed;right:12px;bottom:8px;z-index:2;font-size:11px;color:#e7ecf6;text-shadow:2px 2px #000}
-.card{position:relative;z-index:3;width:min(820px,calc(100vw - 24px));max-height:calc(100vh - 110px);
-  overflow:auto;background:rgba(23,36,64,.96);border:3px solid #fff;padding:20px;
-  box-shadow:8px 8px 0 rgba(0,0,0,.75);margin-top:50px}
+.card{position:relative;z-index:3;width:min(760px,calc(100vw - 32px));max-height:58vh;
+  overflow:auto;background:rgba(23,36,64,.97);border:3px solid #fff;padding:20px;
+  box-shadow:8px 8px 0 rgba(0,0,0,.75);margin:0 auto}
 h1{margin:0 0 8px} p{line-height:1.45}
 label{display:block;margin:16px 0 7px;font-weight:700}
 input{width:100%;font:inherit;font-size:18px;padding:13px;border:3px solid #fff;background:#0f1a33;color:#fff}
@@ -51,14 +51,56 @@ button{font-family:inherit}
 #entry{max-width:520px;margin:auto}
 #countdownScreen{text-align:center}
 @media(max-width:700px){
-  #visualTitle{font-size:12px;top:8px;padding:6px 9px}
-  .card{margin-top:36px;padding:14px;max-height:calc(100vh - 76px)}
+  html,body{overflow:auto;min-height:100%}
+  body{
+    display:block;
+    padding:76px 10px 18px;
+    background:#0b1630;
+  }
+  #visualTitle{
+    top:10px;
+    width:calc(100vw - 24px);
+    white-space:normal;
+    font-size:11px;
+    line-height:1.25;
+    padding:7px 8px;
+    text-align:center;
+  }
+  .card{
+    width:100%;
+    max-height:none;
+    margin:0 auto 360px;
+    padding:14px;
+    box-shadow:5px 5px 0 rgba(0,0,0,.75);
+  }
+  .topbar{
+    grid-template-columns:1fr 1fr;
+    gap:8px;
+  }
+  .topbar .timer{
+    grid-column:1/-1;
+    text-align:center;
+  }
+  .pill{padding:9px 8px}
   .answers{grid-template-columns:1fr}
-  .question{font-size:16px}
-  .answer{font-size:13px;padding:10px}
-  .topbar{grid-template-columns:1fr 1fr}
-  .topbar .timer{grid-column:1/-1;text-align:center}
-  #copyright{font-size:9px}
+  .question{font-size:17px;line-height:1.35}
+  .answer{font-size:14px;padding:12px}
+  .feedback{font-size:20px}
+  .explanation{font-size:12px}
+  .stats{justify-content:center}
+  .stat{font-size:13px}
+  #copyright{
+    position:absolute;
+    right:12px;
+    bottom:8px;
+    font-size:9px;
+  }
+  #gameCanvas{
+    position:fixed;
+    inset:0;
+    width:100%;
+    height:100%;
+  }
 }
 </style>
 </head>
@@ -489,15 +531,17 @@ function currentVisualTarget(){
 }
 function drawScene(ts){
   const w=innerWidth,h=innerHeight;
-  const skyH=Math.max(150,h*.36), groundY=h*.80;
+  const mobile=w<=700;
+  const skyH=mobile?Math.max(220,h*.42):Math.max(150,h*.36);
+  const groundY=mobile?h*.78:h*.80;
   pxRect(0,0,w,h,"#10213a");
   pxRect(0,0,w,skyH,"#79c8eb");
   pxRect(0,skyH,w,groundY-skyH,"#88a67b");
   pxRect(0,groundY,w,h-groundY,"#2c3137");
 
   drawPixelCloud(w*.10,65,.8);drawPixelCloud(w*.38,95,1);drawPixelCloud(w*.72,60,.9);
-  drawHouse(w*.08,groundY,.9);drawHouse(w*.25,groundY,.7);drawHouse(w*.76,groundY,.85);
-  drawCoin(w*.49,groundY-70,1);drawCoin(w*.57,groundY-55,.8);
+  drawHouse(w*.08,groundY,mobile?.65:.9);drawHouse(w*.25,groundY,mobile?.55:.7);drawHouse(w*.76,groundY,mobile?.65:.85);
+  drawCoin(w*.49,groundY-(mobile?52:70),mobile?.75:1);drawCoin(w*.57,groundY-(mobile?42:55),mobile?.65:.8);
   // patrimônio / cofre simbólico
   pxRect(w*.63,groundY-58,66,58,"#707b8c");pxRect(w*.64,groundY-48,46,38,"#364152");
   pxRect(w*.64+16,groundY-35,12,12,"#ffcb42");
@@ -509,16 +553,16 @@ function drawScene(ts){
   for(let i=0;i<8;i++)pxRect(48,trackY-86+i*11,7,11,i%2?"#111":"#fff");
   pxRect(28,trackY-108,70,18,"#0f1a33");
   gctx.fillStyle="#ffd34d";gctx.font="bold 11px Courier New";gctx.fillText("LARGADA",34,trackY-95);
-  const finishX=w-100;drawFinish(finishX,trackY+2);
+  const finishX=w-(mobile?88:100);drawFinish(finishX,trackY+2);
 
   visualTarget=currentVisualTarget();
   visualProgress += (visualTarget-visualProgress)*.05;
   if(!lastVisualTs)lastVisualTs=ts;
   if(ts-lastVisualTs>105){spriteFrame=(spriteFrame+1)%4;lastVisualTs=ts;}
 
-  const startX=70, endX=finishX-58;
+  const startX=mobile?55:70, endX=finishX-(mobile?92:58);
   const rx=startX+(endX-startX)*visualProgress;
-  const spriteW=130, spriteH=100;
+  const spriteW=mobile?118:130, spriteH=mobile?92:100;
   if(runnerSprite.complete && runnerSprite.naturalWidth){
     const fw=runnerSprite.naturalWidth/4, fh=runnerSprite.naturalHeight;
     gctx.drawImage(runnerSprite,fw*spriteFrame,0,fw,fh,rx-spriteW*.25,trackY-spriteH+10,spriteW,spriteH);
@@ -527,10 +571,12 @@ function drawScene(ts){
   }
 
   // mini HUD da corrida
-  pxRect(18,skyH+12,170,42,"rgba(15,26,51,.88)");
-  gctx.fillStyle="#fff";gctx.font="bold 11px Courier New";
-  gctx.fillText("PROGRESSO DA CORRIDA",29,skyH+29);
-  gctx.fillStyle="#ffd34d";gctx.fillText(Math.round(visualProgress*100)+"%",29,skyH+46);
+  if(!mobile){
+    pxRect(18,skyH+12,170,42,"rgba(15,26,51,.88)");
+    gctx.fillStyle="#fff";gctx.font="bold 11px Courier New";
+    gctx.fillText("PROGRESSO DA CORRIDA",29,skyH+29);
+    gctx.fillStyle="#ffd34d";gctx.fillText(Math.round(visualProgress*100)+"%",29,skyH+46);
+  }
 
   requestAnimationFrame(drawScene);
 }
