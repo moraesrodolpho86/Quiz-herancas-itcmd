@@ -71,7 +71,7 @@ body{padding:12px}
   <div class="credit">© 2026 Rodolpho Moraes</div>
 
   <div class="controls">
-    <button class="btn" id="startBtn">▶ INICIAR PARTIDA</button>
+    <button class="btn" id="startBtn" style="display:none" disabled>▶ INICIAR PARTIDA</button>
     <button class="btn secondary" id="resetBtn">↻ NOVA PARTIDA</button>
     <button class="btn secondary" id="fullBtn">⛶ TELA CHEIA</button>
   </div>
@@ -80,7 +80,7 @@ body{padding:12px}
     <section class="coachBox pixel">
       <h3>CABINE DO TREINADOR</h3>
       <canvas id="coachCanvas" width="240" height="520"></canvas>
-      <div class="speech" id="coachSpeech">Aguardando a turma. Todos começam na largada e só avançam após o treinador iniciar a partida.</div>
+      <div class="speech" id="coachSpeech">Aguardando jogadores. Cada participante inicia automaticamente ao entrar.</div>
       <div class="qrCard">
         <div class="qrTitle">ENTRAR NO JOGO</div>
         <img src="data:image/png;base64,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" alt="QR Code para a página do participante" class="qrImg">
@@ -180,6 +180,18 @@ async function dbPatch(path,value){
   }catch(e){return false}
 }
 
+let serverTimeOffset=0;
+async function syncServerClock(){
+  try{
+    const r=await fetch(`${DB_BASE}/.info/serverTimeOffset.json?ts=${Date.now()}`,{cache:"no-store"});
+    const v=await r.json();
+    serverTimeOffset=Number(v)||0;
+  }catch(e){
+    serverTimeOffset=0;
+  }
+}
+function syncedNow(){ return Date.now()+serverTimeOffset; }
+
 function rect(g,x,y,w,h,c){
   g.fillStyle=c; g.fillRect(Math.round(x),Math.round(y),Math.round(w),Math.round(h));
 }
@@ -196,7 +208,9 @@ function normalizedPlayer(id,p){
     progress:Math.max(0,Math.min(1,Number(p.progress||0))),
     finished:!!p.finished,
     finishMs:p.finishedAt ? Number(p.finishedAt) : null,
-    joinedAt:Number(p.joinedAt||0)
+    joinedAt:Number(p.joinedAt||0),
+    startedAt:Number(p.startedAt||p.startAt||0),
+    status:p.status||"ready"
   };
 }
 function compareRanking(a,b){
@@ -249,12 +263,15 @@ function drawRunner(g,x,bottom,frame,scale=.075){
 }
 
 function currentState(){
-  return gameInfo?.status||"lobby";
+  if(participants.some(p=>p.status==="running" || p.status==="countdown")) return "running";
+  if(participants.length && participants.every(p=>p.finished)) return "finished";
+  return "lobby";
 }
 function remainingMs(){
-  if(!gameInfo?.startedAt) return GAME_DURATION;
-  if(currentState()==="finished") return 0;
-  return Math.max(0,gameInfo.startedAt+GAME_DURATION-Date.now());
+  const active=participants.filter(p=>p.startedAt && !p.finished);
+  if(!active.length) return currentState()==="finished"?0:GAME_DURATION;
+  const earliest=Math.min(...active.map(p=>p.startedAt));
+  return Math.max(0,earliest+GAME_DURATION-syncedNow());
 }
 
 function drawTrack(now){
@@ -309,7 +326,7 @@ function drawTrack(now){
   const visible=visibleRunners();
   visible.forEach((r,i)=>{
     const laneY=laneTop+i*laneH;
-    const target=(state==="lobby"||state==="countdown")?0:(r.finished?1:r.progress);
+    const target=(r.status==="running"||r.status==="countdown"||r.finished)?(r.finished?1:r.progress):0;
     const old=displayProgress[r.id]??0;
     displayProgress[r.id]=old+(target-old)*0.08;
     const x=runStart+displayProgress[r.id]*(runEnd-runStart);
@@ -328,19 +345,6 @@ function drawTrack(now){
     }
   });
 
-  // contagem também aparece na pista
-  if(state==="countdown"&&gameInfo?.startAt){
-    const left=gameInfo.startAt-Date.now();
-    let txt="GO!";
-    if(left>COUNTDOWN_STEP*3) txt="3";
-    else if(left>COUNTDOWN_STEP*2) txt="2";
-    else if(left>COUNTDOWN_STEP) txt="1";
-    else if(left>0) txt="GO!";
-    ctx.fillStyle="rgba(0,0,0,.28)"; ctx.fillRect(0,0,race.width,race.height);
-    ctx.fillStyle="#fff"; ctx.font="bold 110px Courier New";
-    const cw=ctx.measureText(txt).width;
-    ctx.fillText(txt,(race.width-cw)/2,330);
-  }
 }
 
 function renderLists(){
@@ -351,7 +355,7 @@ function renderLists(){
   playersList.innerHTML=participants.length?participants.map(p=>`
     <div class="row">
       <strong>${p.name}</strong>
-      <span class="ready">${state==="lobby"||state==="countdown"?"NA LARGADA":p.finished?"CHEGOU":"EM JOGO"}</span>
+      <span class="ready">${p.finished?"CHEGOU":(p.status==="running"||p.status==="countdown")?"EM JOGO":"PRONTO"}</span>
     </div>`).join(""):`<div class="row"><span>Aguardando jogadores...</span></div>`;
 
   rankingList.innerHTML=ranked.length?ranked.map((p,i)=>`
@@ -379,40 +383,28 @@ function renderLists(){
   }
   timeText.textContent=formatTime(remainingMs());
 
-  startBtn.disabled=state!=="lobby"||participants.length===0;
-  startBtn.textContent=participants.length===0?"▶ AGUARDANDO JOGADORES":"▶ INICIAR PARTIDA";
-  resetBtn.disabled=state==="countdown";
+  startBtn.disabled=true;
+  resetBtn.disabled=false;
 
-  if(state==="lobby") coachSpeech.textContent="Aguardando a turma. Todos permanecem na largada até o início.";
-  else if(state==="countdown") coachSpeech.textContent="Atenção. Contagem regressiva iniciada!";
-  else if(state==="running") coachSpeech.textContent="Corrida em andamento. Ranking por acertos; chegada por conclusão das perguntas.";
+  if(state==="lobby") coachSpeech.textContent="Aguardando jogadores. Cada participante inicia automaticamente ao entrar.";
+  else if(state==="countdown") coachSpeech.textContent="Participante iniciando a corrida.";
+  else if(state==="running") coachSpeech.textContent="Corridas em andamento. Ranking por acertos; chegada por conclusão das perguntas.";
   else coachSpeech.textContent="Corrida concluída. Todos cruzaram a linha final.";
 }
 
 async function forceFinishAtDeadline(){
-  if(!gameInfo?.sessionId||!gameInfo?.startedAt) return;
-  if(Date.now()<gameInfo.startedAt+GAME_DURATION) return;
-  if(gameInfo.status==="finished"||lastForcedSession===gameInfo.sessionId) return;
-
-  lastForcedSession=gameInfo.sessionId;
-  const deadline=gameInfo.startedAt+GAME_DURATION;
-  const pending=participants.filter(p=>!p.finished);
-
+  const now=syncedNow();
+  const pending=participants.filter(p=>!p.finished && p.startedAt && now>=p.startedAt+GAME_DURATION);
   for(const p of pending){
-    await dbPatch(`sessions/${gameInfo.sessionId}/players/${p.id}`,{
-      finished:true,
-      finishedAt:deadline,
-      progress:1,
-      status:"finished-time"
-    });
+    const finishAt=p.startedAt+GAME_DURATION;
+    await dbPatch(`sessions/${gameInfo.sessionId}/players/${p.id}`,{finished:true,finishedAt:finishAt,progress:1,status:"finished-time"});
   }
-  await dbPatch("game",{status:"finished",finishedAt:deadline});
 }
 
 async function refresh(){
   let g=await dbGet("game");
   if(!g||!g.sessionId){
-    g={status:"lobby",sessionId:"s_"+Date.now(),createdAt:Date.now(),startAt:null,startedAt:null};
+    g={status:"lobby",sessionId:"s_"+Math.round(syncedNow()),createdAt:syncedNow(),startAt:null,startedAt:null};
     await dbSet("game",g);
     await dbSet(`sessions/${g.sessionId}`,{createdAt:Date.now(),players:{}});
   }
@@ -422,17 +414,10 @@ async function refresh(){
   await forceFinishAtDeadline();
 }
 
-async function startRace(){
-  await refresh();
-  if(!gameInfo||gameInfo.status!=="lobby"||participants.length===0) return;
-  const startAt=Date.now()+COUNTDOWN_MS;
-  await dbPatch("game",{status:"countdown",startAt,startedAt:startAt});
-  gameInfo={...gameInfo,status:"countdown",startAt,startedAt:startAt};
-  setTimeout(()=>dbPatch("game",{status:"running"}),COUNTDOWN_MS+50);
-}
+async function startRace(){ /* modo apresentador não autoriza mais o início */ }
 
 async function newRace(){
-  const g={status:"lobby",sessionId:"s_"+Date.now(),createdAt:Date.now(),startAt:null,startedAt:null};
+  const g={status:"lobby",sessionId:"s_"+Math.round(syncedNow()),createdAt:syncedNow(),startAt:null,startedAt:null};
   await dbSet("game",g);
   await dbSet(`sessions/${g.sessionId}`,{createdAt:Date.now(),players:{}});
   gameInfo=g;
@@ -449,12 +434,13 @@ async function loop(now){
   requestAnimationFrame(loop);
 }
 
-startBtn.onclick=startRace;
+startBtn.onclick=null;
 resetBtn.onclick=newRace;
 fullBtn.onclick=()=>document.documentElement.requestFullscreen&&document.documentElement.requestFullscreen();
 
-refresh();
-pollTimer=setInterval(refresh,650);
+syncServerClock().then(refresh);
+setInterval(syncServerClock,30000);
+pollTimer=setInterval(refresh,500);
 requestAnimationFrame(loop);
 </script>
 </body>
