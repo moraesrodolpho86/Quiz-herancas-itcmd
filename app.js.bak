@@ -44,31 +44,15 @@ $("joinBtn").addEventListener("click",async()=>{
   initials=$("initials").value.trim().toUpperCase();
   if(!validInitials(initials)){ $("initials").focus(); $("initials").style.borderColor="#e94f55"; return; }
   $("initials").style.borderColor="#d9d5fa"; $("playerName").textContent=initials; $("runnerLabel").textContent=initials;
-  $("joinScreen").classList.add("hidden");
+  $("joinScreen").classList.add("hidden"); $("quizScreen").classList.remove("hidden");
   if(db&&dbApi){
     playerRef=dbApi.ref(db,`players/${playerId}`);
     await dbApi.set(playerRef,{initials,score:0,current:0,online:true,finished:false,updatedAt:dbApi.serverTimestamp()});
     const connectedRef=dbApi.ref(db,".info/connected");
     dbApi.onValue(connectedRef,snap=>{if(snap.val()===true){dbApi.onDisconnect(playerRef).update({online:false,updatedAt:dbApi.serverTimestamp()});dbApi.update(playerRef,{online:true,updatedAt:dbApi.serverTimestamp()});}});
   }
-  await startCountdown();
-  $("quizScreen").classList.remove("hidden");
   renderQuestion(); moveRunner();
 });
-
-
-function sleep(ms){ return new Promise(resolve=>setTimeout(resolve,ms)); }
-async function startCountdown(){
-  const overlay=$("countdownOverlay"), number=$("countdownNumber");
-  if(!overlay || !number) return;
-  overlay.classList.remove("hidden");
-  for(const value of ["3","2","1","VAI!"]){
-    number.textContent=value;
-    number.classList.remove("pop"); void number.offsetWidth; number.classList.add("pop");
-    await sleep(value==="VAI!" ? 650 : 800);
-  }
-  overlay.classList.add("hidden");
-}
 
 function renderQuestion(){
   answered=false; const q=questions[current];
