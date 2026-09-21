@@ -1,13 +1,12 @@
-QUIZ RUNNER — V3 AUTO START
+QUIZ RUNNER — AUTO START V4
 
-Mudança solicitada:
-- o participante não precisa mais aguardar autorização do apresentador;
-- ao inserir as iniciais e entrar, começa imediatamente a contagem 3 → 2 → 1 → GO!;
-- cada participante possui seu próprio período de 2 minutos;
-- o modo apresentador passa a ser somente de acompanhamento;
-- ranking, pista, QR Code, visual e demais regras foram mantidos;
-- o botão Nova partida continua disponível no apresentador para limpar a sessão.
+Correção aplicada:
+- ao inserir as iniciais, o participante entra e inicia automaticamente;
+- não existe mais espera por autorização do apresentador;
+- cada participante vê 3 → 2 → 1 → GO! e começa sua corrida;
+- o apresentador permanece apenas como tela de acompanhamento;
+- demais regras, visual, ranking, Firebase e duração foram mantidos.
 
-No GitHub, substitua:
+Substitua no GitHub:
 1. index.html
 2. apresentador.html

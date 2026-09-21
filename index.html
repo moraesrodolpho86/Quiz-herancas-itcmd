@@ -159,10 +159,10 @@ canvas{display:block;width:100%;height:100%;background:#87ceeb}
 <div id="waiting-screen" class="screen hidden">
   <div class="card">
     <div class="kicker">LINHA DE LARGADA</div>
-    <h2 class="wait-title">VOCÊ ESTÁ PRONTO!</h2>
+    <h2 class="wait-title">PREPARE-SE!</h2>
     <div>Jogador <strong id="waiting-player">--</strong></div>
     <div class="ready-count" id="ready-count">1 corredor na largada</div>
-    <p id="waiting-note">O treinador dará a largada.</p>
+    <p id="waiting-note">A largada será automática.</p>
     <div class="copyright">© 2026 Rodolpho Moraes</div>
   </div>
 </div>
@@ -413,19 +413,33 @@ function loop(t){const dt=Math.min(.033,(t-last)/1000||0);last=t;update(dt,t);re
 async function joinRace(){
  const v=document.getElementById("initials-input").value.trim().toUpperCase().replace(/[^A-Z0-9]/g,"").slice(0,2);if(v.length<2)return;
  initials=v;sessionStorage.setItem("itcmd2Initials",initials);document.getElementById("player-label").textContent=initials;document.getElementById("waiting-player").textContent=initials;
- let g=await dbGet("game");if(!g||!g.sessionId||g.status==="finished"){g={status:"lobby",sessionId:"s_"+Date.now(),createdAt:Date.now()};await dbSet("game",g);await dbSet(`sessions/${g.sessionId}`,{createdAt:Date.now(),players:{}})}
- if(g.status==="running"||g.status==="countdown"){alert("A corrida já começou. Aguarde o apresentador abrir uma nova partida.");return}
- currentSession=g.sessionId;await dbSet(`sessions/${currentSession}/players/${uid}`,{initials,joinedAt:Date.now(),ready:true,hits:0,combo:0,score:0,progress:0,qIndex:0,answeredCount:0,finished:false,status:"waiting"});
- ui.start.classList.add("hidden");ui.waiting.classList.remove("hidden");document.getElementById("waiting-note").textContent="O treinador dará a largada quando todos estiverem prontos.";pollLobby()
+ await syncServerClock();
+ let g=await dbGet("game");
+ if(!g||!g.sessionId||g.status==="finished"){
+   g={status:"lobby",sessionId:"s_"+Math.round(syncedNow()),createdAt:syncedNow()};
+   await dbSet("game",g);
+   await dbSet(`sessions/${g.sessionId}`,{createdAt:syncedNow(),players:{}});
+ }
+ currentSession=g.sessionId;
+ const personalStartAt=syncedNow()+COUNTDOWN_MS;
+ raceStartedAt=personalStartAt;
+ await dbSet(`sessions/${currentSession}/players/${uid}`,{
+   initials,joinedAt:syncedNow(),ready:true,hits:0,combo:0,score:0,progress:0,qIndex:0,answeredCount:0,
+   finished:false,status:"countdown",startedAt:personalStartAt,startAt:personalStartAt
+ });
+ ui.start.classList.add("hidden");
+ ui.waiting.classList.add("hidden");
+ beginImmediateRace(personalStartAt);
 }
 
-async function beginImmediateRace(){
+async function beginImmediateRace(personalStartAt){
   await syncServerClock();
-  const personalStartAt=syncedNow()+COUNTDOWN_MS;
+  personalStartAt=Number(personalStartAt||raceStartedAt||syncedNow()+COUNTDOWN_MS);
   raceStartedAt=personalStartAt;
   await syncPlayer({status:"countdown",startedAt:personalStartAt,startAt:personalStartAt,finished:false,progress:0,qIndex:0,answeredCount:0});
   await dbPatch("game",{status:"running",lastPlayerStartedAt:personalStartAt,updatedAt:syncedNow()});
-  ui.waiting.classList.add("hidden");ui.countdown.classList.remove("hidden");
+  ui.waiting.classList.add("hidden");
+  ui.countdown.classList.remove("hidden");
   const tick=()=>{
     const left=personalStartAt-syncedNow();
     if(left>COUNTDOWN_STEP*3)ui.countdown.textContent="3";
