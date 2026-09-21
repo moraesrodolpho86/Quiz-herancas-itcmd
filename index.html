@@ -252,7 +252,7 @@ const RUNNER_SPRITE_DATA="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAACHwAAALU
 const runnerSprite=new Image();
 runnerSprite.src=RUNNER_SPRITE_DATA;
 const RUNNER_FRAMES=4;
-const presenterMode=new URLSearchParams(location.search).get("modo")==="apresentador";
+const presenterMode=false; // modo apresentador agora é uma página separada: apresentador.html
 const uid=(()=>{let v=sessionStorage.getItem("itcmd2Uid");if(!v){v="p_"+Date.now()+"_"+Math.random().toString(36).slice(2,8);sessionStorage.setItem("itcmd2Uid",v)}return v})();
 let initials=(sessionStorage.getItem("itcmd2Initials")||"").toUpperCase();
 let currentSession=null, gameInfo=null, allPlayers={};
