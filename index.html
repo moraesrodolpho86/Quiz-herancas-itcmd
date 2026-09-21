@@ -41,7 +41,7 @@ button{font-family:inherit}
 .answer.wrong{border-color:#ff8585;background:#48202a}
 .feedback{font-size:22px;font-weight:900;text-align:center;margin-top:12px;min-height:30px}
 .feedback.ok{color:#63df95}.feedback.bad{color:#ff8585}
-.explanation{margin-top:7px;text-align:center;line-height:1.35;color:#dce4f5;min-height:34px;font-size:12px}
+  .explanation{display:none!important}
 .stats{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;justify-content:center}
 .stat{background:#0f1a33;border:2px solid #fff;padding:7px 9px;font-weight:900}
 .final{text-align:center}
@@ -439,8 +439,6 @@ async function answerBonus(choice,clicked){
   }
 
   const responseMs=Math.max(0,Math.round(performance.now()-questionStartedAt));
-  const letter=String.fromCharCode(65+BONUS_QUESTION.correct);
-  document.getElementById("bonusExplanation").textContent=`Alternativa correta: ${letter}. ${BONUS_QUESTION.answers[BONUS_QUESTION.correct]}`;
 
   await syncPlayer({
     bonusRequired:false,
@@ -520,8 +518,6 @@ async function answerQuestion(choice,clicked){
   }
 
   answered++;
-  const letter=String.fromCharCode(65+q.correct);
-  document.getElementById("explanation").textContent=`Alternativa correta: ${letter}. ${q.answers[q.correct]} — ${q.explanation}`;
   updateHUD();
 
   await syncPlayer({
