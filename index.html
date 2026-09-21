@@ -322,7 +322,7 @@ function popSpeed(text){ui.speedPop.textContent=text;ui.speedPop.classList.add("
 function burst(x,y,count,color){for(let i=0;i<count;i++)particles.push({x,y,vx:(Math.random()*2-1)*110,vy:-40-Math.random()*120,life:.6+Math.random()*.4,color,size:3+Math.floor(Math.random()*4)})}
 function showQuestion(){
  clearInterval(qTimer);
- if(questionIndex>=questions.length){ui.quiz.classList.add("hidden");return}
+ if(questionIndex>=questions.length){ui.quiz.classList.add("hidden");player.x=WORLD.finishX;finishGame("questions");return}
  answerLocked=false;ui.feedback.textContent="";ui.feedback.className="";qLeft=QUESTION_SECONDS;ui.qtimer.textContent=qLeft+"s";
  const q=questions[questionIndex];ui.qcounter.textContent=`PERGUNTA ${questionIndex+1}/${questions.length}`;ui.qtext.textContent=q.question;ui.answers.innerHTML="";
  q.answers.forEach((ans,idx)=>{const b=document.createElement("button");b.className="answer-btn";b.textContent=`${String.fromCharCode(65+idx)}. ${ans}`;b.onclick=()=>answerQuestion(idx,b);ui.answers.appendChild(b)});
@@ -340,12 +340,31 @@ async function answerQuestion(idx,clicked){
  }
  ui.hits.textContent=correctCount;ui.combo.textContent=combo;ui.score.textContent=`${score} PTS`;
  syncPlayer({hits:correctCount,combo,bestCombo,score,qIndex:questionIndex+1,answeredCount:questionIndex+1,lastAnswer:idx,lastAnswerCorrect:ok,status:"answering"});
- setTimeout(()=>{questionIndex++;showQuestion()},750)
+ setTimeout(()=>{
+  questionIndex++;
+  if(questionIndex>=questions.length){
+    player.x=WORLD.finishX;
+    if(currentSession)dbPatch(`sessions/${currentSession}/players/${uid}`,{
+      progress:1,
+      qIndex:questions.length,
+      answeredCount:questions.length,
+      status:"finished-questions",
+      updatedAt:syncedNow()
+    });
+    finishGame("questions");
+    return;
+  }
+  showQuestion();
+},750)
 }
 function autoJumpIfNeeded(){if(!player.grounded)return;const next=obstacles.find(o=>o>player.x&&o-player.x<125);if(next){player.vy=-500;player.grounded=false;burst(player.x,player.y+player.height,5,"#e7d7b1")}}
 function update(dt,now){
  if(gameState!=="playing")return;const officialNow=syncedNow();elapsed=Math.max(0,(officialNow-raceStartedAt)/1000);if(ui.raceTime)ui.raceTime.textContent=formatRaceTime(GAME_DURATION-(officialNow-raceStartedAt));
- const mult=currentMultiplier(now);maxMultiplier=Math.max(maxMultiplier,mult);player.vx=player.baseSpeed*mult;player.x+=player.vx*dt;autoJumpIfNeeded();
+ const mult=currentMultiplier(now);maxMultiplier=Math.max(maxMultiplier,mult);player.vx=player.baseSpeed*mult;player.x+=player.vx*dt;
+// A posição física não encerra a corrida: o corredor fica antes da faixa
+// até responder todas as perguntas ou completar 2 minutos.
+if(questionIndex<questions.length)player.x=Math.min(player.x,WORLD.finishX-34);
+autoJumpIfNeeded();
  if(!player.grounded){player.vy+=1080*dt;player.y+=player.vy*dt;if(player.y>=WORLD.groundY-player.height){player.y=WORLD.groundY-player.height;player.vy=0;player.grounded=true}}
  player.frameClock+=dt*(7+mult*2);player.frame=Math.floor(player.frameClock)%4;
  const target=Math.max(0,player.x-canvas.width*.34);cameraX+=(target-cameraX)*Math.min(1,dt*5);cameraX=Math.min(cameraX,WORLD.length-canvas.width);
@@ -353,13 +372,16 @@ function update(dt,now){
  const progress=Math.min(100,Math.max(0,(player.x-WORLD.startX)/(WORLD.finishX-WORLD.startX)*100));ui.pbar.style.width=progress+"%";ui.plabel.textContent=Math.floor(progress)+"% • 🏁";ui.speed.textContent=mult.toFixed(1)+"x";
  const sceneIdx=Math.min(4,Math.floor(player.x/WORLD.sceneWidth));ui.scene.textContent=scenes[sceneIdx].name;
  if(currentSession)dbPatch(`sessions/${currentSession}/players/${uid}`,{progress:progress/100,speed:mult,updatedAt:Date.now()});
- if(player.x>=WORLD.finishX||syncedNow()>=raceStartedAt+GAME_DURATION)finishGame()
+ if(syncedNow()>=raceStartedAt+GAME_DURATION){
+  player.x=WORLD.finishX;
+  finishGame("time");
 }
-async function finishGame(){
+}
+async function finishGame(reason="questions"){
  if(gameState==="finished")return;gameState="finished";clearInterval(qTimer);clearInterval(syncInterval);ui.quiz.classList.add("hidden");ui.hud.classList.add("hidden");ui.pwrap.classList.add("hidden");
  elapsed=Math.min(GAME_DURATION/1000,Math.max(0,(syncedNow()-raceStartedAt)/1000));const acc=Math.round(correctCount/questions.length*100),m=Math.floor(elapsed/60).toString().padStart(2,"0"),s=Math.floor(elapsed%60).toString().padStart(2,"0");
  document.getElementById("final-hits").textContent=`${correctCount}/${questions.length}`;document.getElementById("final-accuracy").textContent=acc+"%";document.getElementById("final-time").textContent=`${m}:${s}`;document.getElementById("final-combo").textContent=bestCombo;document.getElementById("final-speed").textContent=maxMultiplier.toFixed(1)+"x";document.getElementById("final-score").textContent=score;ui.finish.classList.remove("hidden");
- if(currentSession)await dbPatch(`sessions/${currentSession}/players/${uid}`,{finished:true,finishedAt:syncedNow(),progress:1,elapsed,hits:correctCount,score,bestCombo,maxSpeed:maxMultiplier,status:"finished"})
+ if(currentSession)await dbPatch(`sessions/${currentSession}/players/${uid}`,{finished:true,finishedAt:syncedNow(),progress:1,elapsed,hits:correctCount,score,bestCombo,maxSpeed:maxMultiplier,status:"finished",finishReason:reason})
 }
 function drawPixelRect(x,y,w,h,color){ctx.fillStyle=color;ctx.fillRect(Math.round(x),Math.round(y),Math.round(w),Math.round(h))}
 function drawRunnerSprite(g,x,bottomY,frame=0,scale=.12,alpha=1){

@@ -1,12 +1,10 @@
-QUIZ RUNNER — AUTO START V4
+QUIZ RUNNER — V9 — AJUSTE DO PAINEL DO APRESENTADOR
 
-Correção aplicada:
-- ao inserir as iniciais, o participante entra e inicia automaticamente;
-- não existe mais espera por autorização do apresentador;
-- cada participante vê 3 → 2 → 1 → GO! e começa sua corrida;
-- o apresentador permanece apenas como tela de acompanhamento;
-- demais regras, visual, ranking, Firebase e duração foram mantidos.
+Alterações:
+- "ENTRAR NO JOGO" fica acima do QR Code;
+- "CABINE DO TREINADOR" fica dentro do mesmo retângulo do sprite do treinador;
+- demais elementos foram mantidos.
 
-Substitua no GitHub:
-1. index.html
-2. apresentador.html
+No GitHub:
+- para esta alteração visual, basta substituir apresentador.html;
+- index.html foi mantido no pacote por conveniência.

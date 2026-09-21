@@ -23,7 +23,6 @@ body{padding:12px}
 .pixel{background:var(--panel); border:4px solid #fff; box-shadow:7px 7px 0 #000}
 .coachBox{padding:10px; display:flex; flex-direction:column; min-height:650px; gap:10px}
 #coachCanvas{width:100%; height:auto; background:#243554; image-rendering:pixelated; border:3px solid #fff}
-.speech{margin-top:10px; background:#fff; color:#111; border:3px solid #111; padding:10px; min-height:76px; font-weight:900}
 .stage{position:relative; min-height:650px}
 #raceCanvas{display:block; width:100%; height:100%; image-rendering:pixelated}
 .stageBadge{position:absolute; left:14px; top:14px; background:rgba(0,0,0,.72); border:3px solid #fff; padding:8px 10px; font-weight:900}
@@ -45,12 +44,17 @@ body{padding:12px}
 #finishList .row span.rank{color:var(--gold); font-weight:900}
 .legend{font-size:11px; color:#cfd7ea; margin-top:6px}
 
-.qrCard{background:#fff;color:#111;border:3px solid #111;padding:9px;text-align:center}
-.qrTitle{font-weight:900;font-size:12px;margin-bottom:6px}
-.qrImg{width:min(150px,80%);height:auto;image-rendering:pixelated;display:block;margin:0 auto}
+.qrCard{background:#fff;color:#111;border:3px solid #111;padding:8px;text-align:center;margin-bottom:8px}
+.qrTitle{font-weight:900;font-size:13px;margin-bottom:7px}
+.qrImg{width:min(132px,72%);height:auto;image-rendering:pixelated;display:block;margin:0 auto}
 .qrHint{font-size:10px;margin-top:5px}
 
 .credit{margin:8px 0 14px; text-align:right; color:#d8def1; font-size:12px; font-weight:700}
+
+.trainerCabin{border:3px solid #fff;background:#243554;padding:8px;margin-top:8px}
+.trainerCabinTitle{text-align:center;font-weight:900;font-size:14px;margin:2px 0 8px;color:#fff}
+.trainerCabin #coachCanvas{border:0;width:100%;height:auto;background:#243554;display:block}
+
 @media(max-width:1100px){
   .grid{grid-template-columns:240px 1fr}
   .side{grid-column:1/-1; display:grid; grid-template-columns:1fr 1fr 1fr}
@@ -78,13 +82,15 @@ body{padding:12px}
 
   <div class="grid">
     <section class="coachBox pixel">
-      <h3>CABINE DO TREINADOR</h3>
-      <canvas id="coachCanvas" width="240" height="520"></canvas>
-      <div class="speech" id="coachSpeech">Aguardando jogadores. Cada participante inicia automaticamente ao entrar.</div>
       <div class="qrCard">
         <div class="qrTitle">ENTRAR NO JOGO</div>
         <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAASgAAAEoCAIAAABkZftOAAAF20lEQVR4nO3dy45cJxRA0VSU//9lZ+AxllA42dC11rh96+HaYnAEfH79+vUX8P/6u34D8I2EBwHhQUB4EBAeBIQHAeFBQHgQEB4EhAcB4UFAeBAQHgSEBwHhQeCf3X/w+Xwm3sdxq32Gq/d/al/i7vNP/f20U+9n93t+/fe2YsWDgPAgIDwICA8CwoOA8CAgPAhsz/FWqvM5T815pudvp0zP01bPqb7nldd/b1Y8CAgPAsKDgPAgIDwICA8CwoPAsTneyqm5x6m5TTUHO+XUvPHUPO22/YS3/d5WrHgQEB4EhAcB4UFAeBAQHgSEB4HxOd5tqvnVKa+fz8lvVjwICA8CwoOA8CAgPAgIDwLCg8DXzfGm51q33b83rXrd11nxICA8CAgPAsKDgPAgIDwICA8C43O8V+Y81XzvlNvep7nin1nxICA8CAgPAsKDgPAgIDwICA8Cx+Z4r5zTeGo/2/T5lq///bRXfm8rVjwICA8CwoOA8CAgPAgIDwLCg8Dnlf1Lp0zPf6bPz6ycmuN92+9txYoHAeFBQHgQEB4EhAcB4UFAeBDY3o83vV9ret/XbfOoaq44vU/vlFOvW/1uV6x4EBAeBIQHAeFBQHgQEB4EhAeB7TnebecxVvPD6h656Xna7ue6bf5523xvxYoHAeFBQHgQEB4EhAcB4UFAeBDYPlfztnMpp+dI0/PAav522/7J6ndoPx58EeFBQHgQEB4EhAcB4UFAeBA4dj9eNaeqnl+dM3nKbe+/mstVn9eKBwHhQUB4EBAeBIQHAeFBQHgQODbH237hy+4r23XbvX+7fur8s9oHaD8ePEB4EBAeBIQHAeFBQHgQEB4Etu/HOzUnOTW3qe7f2/37V+aQpz7vtOn78VZOfV4rHgSEBwHhQUB4EBAeBIQHAeFBIDtX87Z79qbddq7jK/shX9+vuGLFg4DwICA8CAgPAsKDgPAgIDwIjO/Hq+ZX0+c9Ts+XpvebTc/rqvnbym3v04oHAeFBQHgQEB4EhAcB4UFAeBB45n683efsmr7P7bbn7Kq+5+nn7D7/FCseBIQHAeFBQHgQEB4EhAcB4UEgux/v1OtWc7/d5982v6r2Jf7UfXq7v0MrHgSEBwHhQUB4EBAeBIQHAeFBYHw/3vT+sVfmYJVvm6Ou3HbvnxUPAsKDgPAgIDwICA8CwoOA8CCwPcf7qfvxXjnfcuWn/r+sTJ+DOs2KBwHhQUB4EBAeBIQHAeFBQHgQ2D5X8za3zeVu22+2a3oeOD1nu+3c0RUrHgSEBwHhQUB4EBAeBIQHAeFBYHyOd2p+Mj3nWXn9vM1Tr1udS1nN/aZZ8SAgPAgIDwLCg4DwICA8CAgPAs/cj/fKPrfp92mf4W+3fS778eABwoOA8CAgPAgIDwLCg4DwIHBsjrc7V6nmJ5VT389t99pVr1v9fpyrCQ8THgSEBwHhQUB4EBAeBIQHge1zNafndbftN3t9vjTttu9t1/Tvc8WKBwHhQUB4EBAeBIQHAeFBQHgQGD9X8zbVHPKnnre5q9pnuOJ+PPgiwoOA8CAgPAgIDwLCg4DwIHBsP95tXplrVfOr6eeccur/5bbfgxUPAsKDgPAgIDwICA8CwoOA8CCwPcdbqfY13XaO5fRzbpuzTbttn5778eBhwoOA8CAgPAgIDwLCg4DwIHBsjrdSzdmmn7PyyrmOp5yaN1bnjlZzUSseBIQHAeFBQHgQEB4EhAcB4UFgfI53m1P7316Zv72yP7DaD+l+PPgiwoOA8CAgPAgIDwLCg4DwIPB1c7xX3HZ+5m3zul2n9km6Hw8eJjwICA8CwoOA8CAgPAgIDwKfah/UKdP31O16/Xs4Zfp80er8UvfjwcOEBwHhQUB4EBAeBIQHAeFB4Ngc7zanzsm87ZzJ2/bFVd/zyivzWCseBIQHAeFBQHgQEB4EhAcB4UFge44H/HdWPAgIDwLCg4DwICA8CAgPAsKDgPAgIDwICA8CwoOA8CAgPAgIDwLCg8C/5+XbZyGTNSYAAAAASUVORK5CYII=" alt="QR Code para a página do participante" class="qrImg">
         <div class="qrHint">Aponte a câmera do celular</div>
+      </div>
+
+      <div class="trainerCabin">
+        <div class="trainerCabinTitle">CABINE DO TREINADOR</div>
+        <canvas id="coachCanvas" width="240" height="520"></canvas>
       </div>
     </section>
 
@@ -104,7 +110,7 @@ body{padding:12px}
         <div class="scrollList" id="playersList"></div>
       </div>
       <div class="card pixel">
-        <h3>RANKING AO VIVO</h3>
+        <h3>RANKING AO VIVO</h3><div class="legend">Critério: mais acertos em menor tempo.</div>
         <div class="scrollList" id="rankingList"></div>
         
       </div>
@@ -213,9 +219,17 @@ function normalizedPlayer(id,p){
     status:p.status||"ready"
   };
 }
+function playerElapsedMs(p){
+  if(!p.startedAt) return Infinity;
+  const end=p.finished && p.finishMs ? p.finishMs : syncedNow();
+  return Math.max(0,end-p.startedAt);
+}
 function compareRanking(a,b){
+  // 1º critério: maior número de acertos
   if(b.hits!==a.hits) return b.hits-a.hits;
-  if(a.finished && b.finished && a.finishMs!==b.finishMs) return (a.finishMs||Infinity)-(b.finishMs||Infinity);
+  // 2º critério: menor tempo decorrido desde a largada individual
+  const ta=playerElapsedMs(a), tb=playerElapsedMs(b);
+  if(ta!==tb) return ta-tb;
   return a.name.localeCompare(b.name);
 }
 function compareArrival(a,b){
@@ -361,7 +375,7 @@ function renderLists(){
   rankingList.innerHTML=ranked.length?ranked.map((p,i)=>`
     <div class="row">
       <strong>${i+1}º ${p.name}</strong>
-      <span>${p.hits} acertos</span>
+      <span>${p.hits} acertos • ${formatTime(playerElapsedMs(p))}</span>
     </div>`).join(""):`<div class="row"><span>Ranking aparecerá aqui.</span></div>`;
 
   finishList.innerHTML=arrivals.length?arrivals.map((p,i)=>`
@@ -385,11 +399,6 @@ function renderLists(){
 
   startBtn.disabled=true;
   resetBtn.disabled=false;
-
-  if(state==="lobby") coachSpeech.textContent="Aguardando jogadores. Cada participante inicia automaticamente ao entrar.";
-  else if(state==="countdown") coachSpeech.textContent="Participante iniciando a corrida.";
-  else if(state==="running") coachSpeech.textContent="Corridas em andamento. Ranking por acertos; chegada por conclusão das perguntas.";
-  else coachSpeech.textContent="Corrida concluída. Todos cruzaram a linha final.";
 }
 
 async function forceFinishAtDeadline(){
