@@ -1,68 +1,163 @@
 <!doctype html>
 <html lang="pt-BR">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Quiz Heranças — Teste Participante</title>
-  <style>
-    body{font-family:Arial,sans-serif;background:#0b1630;color:#fff;display:grid;place-items:center;min-height:100vh;margin:0;padding:20px}
-    .card{max-width:560px;width:100%;background:#16213d;border:2px solid #fff;padding:24px;box-sizing:border-box}
-    h1{margin-top:0}
-    .ok{color:#63df95;font-weight:700}
-    .bad{color:#ff7b7b;font-weight:700}
-    code{background:#0f1730;padding:2px 6px}
-  </style>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Quiz Heranças — Entrada</title>
+<style>
+  *{box-sizing:border-box}
+  body{margin:0;min-height:100vh;display:grid;place-items:center;padding:20px;background:#0b1630;color:#fff;font-family:Arial,sans-serif}
+  .card{width:min(520px,100%);background:#172440;border:2px solid #fff;padding:26px}
+  h1{margin:0 0 8px;font-size:28px}
+  p{line-height:1.45}
+  label{display:block;margin:18px 0 7px;font-weight:700}
+  input{width:100%;font-size:18px;padding:13px;border:2px solid #fff;background:#0f1a33;color:#fff}
+  button{width:100%;margin-top:14px;padding:14px;font-size:17px;font-weight:700;border:0;cursor:pointer;background:#ffd34d;color:#111}
+  button:disabled{opacity:.55;cursor:not-allowed}
+  .status{margin-top:14px;min-height:22px}
+  .ok{color:#63df95;font-weight:700}
+  .bad{color:#ff8585;font-weight:700}
+  .small{font-size:13px;color:#c8d1e6}
+  .hidden{display:none}
+</style>
 </head>
 <body>
-  <div class="card">
-    <h1>Teste do participante</h1>
-    <p id="status">Testando conexão com o Firebase...</p>
-    <p>Raiz: <code>quizHerancasV2</code></p>
-  </div>
+<main class="card">
+  <section id="entry">
+    <h1>Herança, Desigualdade e Tributação</h1>
+    <p>Digite seu nome para entrar na sessão do quiz.</p>
+
+    <label for="playerName">Nome</label>
+    <input id="playerName" maxlength="20" autocomplete="name" placeholder="Ex.: Rodolpho Moraes">
+
+    <button id="joinBtn">ENTRAR</button>
+    <div id="status" class="status"></div>
+    <p class="small">Máximo de 20 caracteres.</p>
+  </section>
+
+  <section id="joined" class="hidden">
+    <h1>Entrada confirmada</h1>
+    <p id="welcome"></p>
+    <p class="ok">Seu nome foi registrado no Firebase.</p>
+    <p class="small">Nesta etapa ainda não há corrida nem perguntas.</p>
+  </section>
+</main>
 
 <script>
-const DB_BASE = "https://quiz-herancas-itcmd-default-rtdb.firebaseio.com";
-const ROOT = "quizHerancasV2";
+const DB_BASE="https://quiz-herancas-itcmd-default-rtdb.firebaseio.com";
+const ROOT="quizHerancasV2";
+let serverTimeOffset=0;
 
-async function setJson(path, value) {
-  const r = await fetch(`${DB_BASE}/${ROOT}/${path}.json`, {
-    method: "PUT",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(value)
-  });
-  if (!r.ok) throw new Error("Falha ao gravar: " + r.status);
+async function syncClock(){
+  try{
+    const r=await fetch(`${DB_BASE}/.info/serverTimeOffset.json?ts=${Date.now()}`,{cache:"no-store"});
+    serverTimeOffset=Number(await r.json())||0;
+  }catch(e){ serverTimeOffset=0; }
 }
+function now(){ return Date.now()+serverTimeOffset; }
 
-async function getJson(path) {
-  const r = await fetch(`${DB_BASE}/${ROOT}/${path}.json?ts=${Date.now()}`, {
-    cache: "no-store"
-  });
-  if (!r.ok) throw new Error("Falha ao ler: " + r.status);
+async function getJson(path){
+  const r=await fetch(`${DB_BASE}/${ROOT}/${path}.json?ts=${Date.now()}`,{cache:"no-store"});
+  if(!r.ok) throw new Error(`Erro de leitura (${r.status})`);
   return await r.json();
 }
+async function putJson(path,value){
+  const r=await fetch(`${DB_BASE}/${ROOT}/${path}.json`,{
+    method:"PUT",
+    headers:{"Content-Type":"application/json"},
+    body:JSON.stringify(value)
+  });
+  if(!r.ok) throw new Error(`Erro de gravação (${r.status})`);
+}
+async function patchJson(path,value){
+  const r=await fetch(`${DB_BASE}/${ROOT}/${path}.json`,{
+    method:"PATCH",
+    headers:{"Content-Type":"application/json"},
+    body:JSON.stringify(value)
+  });
+  if(!r.ok) throw new Error(`Erro de atualização (${r.status})`);
+}
 
-(async () => {
-  const status = document.getElementById("status");
-  try {
-    const payload = {
-      role: "participante",
-      message: "Firebase conectado — participante",
-      timestamp: Date.now()
-    };
-    await setJson("connectionTest/participant", payload);
-    const back = await getJson("connectionTest/participant");
+function makeId(prefix){
+  return `${prefix}_${Math.round(now())}_${Math.random().toString(36).slice(2,8)}`;
+}
 
-    if (back && back.message === payload.message) {
-      status.textContent = "Firebase conectado — participante";
-      status.className = "ok";
-    } else {
-      throw new Error("Leitura diferente do valor gravado.");
-    }
-  } catch (err) {
-    status.textContent = "Erro de conexão: " + err.message;
-    status.className = "bad";
+async function getOrCreateSession(){
+  let game=await getJson("game");
+  if(game && game.sessionId) return game;
+
+  const sessionId=makeId("session");
+  game={
+    version:"v2-clean",
+    sessionId,
+    status:"lobby",
+    createdAt:now()
+  };
+
+  await putJson("game",game);
+  await putJson(`sessions/${sessionId}`,{
+    createdAt:now(),
+    status:"lobby"
+  });
+
+  return game;
+}
+
+const nameInput=document.getElementById("playerName");
+const joinBtn=document.getElementById("joinBtn");
+const statusEl=document.getElementById("status");
+
+joinBtn.addEventListener("click",async()=>{
+  const name=nameInput.value.trim().replace(/\s+/g," ");
+  statusEl.className="status";
+
+  if(!name){
+    statusEl.textContent="Digite seu nome.";
+    statusEl.classList.add("bad");
+    nameInput.focus();
+    return;
   }
-})();
+  if(name.length>20){
+    statusEl.textContent="Use no máximo 20 caracteres.";
+    statusEl.classList.add("bad");
+    return;
+  }
+
+  joinBtn.disabled=true;
+  statusEl.textContent="Registrando...";
+  try{
+    await syncClock();
+    const game=await getOrCreateSession();
+    const playerId=makeId("player");
+
+    await putJson(`sessions/${game.sessionId}/players/${playerId}`,{
+      name,
+      joinedAt:now(),
+      startedAt:null,
+      hits:0,
+      score:0,
+      answeredCount:0,
+      progress:0,
+      finished:false,
+      finishedAt:null,
+      status:"registered"
+    });
+
+    document.getElementById("entry").classList.add("hidden");
+    document.getElementById("joined").classList.remove("hidden");
+    document.getElementById("welcome").textContent=`Olá, ${name}!`;
+  }catch(err){
+    statusEl.textContent="Não foi possível entrar: "+err.message;
+    statusEl.className="status bad";
+    joinBtn.disabled=false;
+  }
+});
+
+nameInput.addEventListener("keydown",e=>{
+  if(e.key==="Enter") joinBtn.click();
+});
+
+syncClock();
 </script>
 </body>
 </html>
