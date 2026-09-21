@@ -86,7 +86,6 @@ async function answer(idx,clicked){
 }
 function moveRunner(boost=false){
   const track=$("track"),runner=$("runner"); const max=Math.max(0,track.clientWidth-runner.offsetWidth-55); const pos=12+(score/questions.length)*max; runner.style.left=`${pos}px`;
-  if(boost){runner.classList.remove('boost');void runner.offsetWidth;runner.classList.add('boost')}
 }
 $("nextBtn").addEventListener("click",()=>{if(current>=questions.length-1){finish();return}current++;renderQuestion()});
 function finish(){

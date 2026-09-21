@@ -22,7 +22,7 @@ O GitHub Pages fará novo deploy automaticamente.
 
 
 NOVIDADES DA V4
-- copyright © 2026 Rodolpho Moraes no topo da corrida
+- texto no topo da corrida: Elaboração e organização: Rodolpho Moraes
 - mensagem final: “Parabéns, você é um amigo”
 - lista de jogadores online no celular
 - ordem de chegada dos participantes na tela projetada
@@ -33,3 +33,5 @@ NOVIDADES DA V5
 - participante segue para a próxima pergunta por conta própria
 - corredor redesenhado em CSS com animação contínua de braços/pernas
 - animação acelera visualmente quando há acerto e avanço na pista
+
+- corredor substituído pela imagem enviada pelo usuário (sem animação)

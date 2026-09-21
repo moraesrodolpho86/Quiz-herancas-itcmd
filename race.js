@@ -31,7 +31,7 @@ function laneHTML(p){
     <div class="rank-badge ${rankClass(p.rank)}">${ordinal(p.rank)}</div>
     <div class="lane-center">
       <div class="lane-meta"><div class="lane-name"><span class="online-dot"></span>${p.initials || '--'}</div><span class="score-pill">${score}/${total} • ${pct}%</span></div>
-      <div class="lane-track"><div class="lane-runner" style="left:calc(8px + (100% - 82px) * ${pct/100})"><div class="runner-figure" aria-hidden="true"><span class="rf-head"></span><span class="rf-body"></span><span class="rf-arm rf-arm-a"></span><span class="rf-arm rf-arm-b"></span><span class="rf-leg rf-leg-a"></span><span class="rf-leg rf-leg-b"></span></div></div></div>
+      <div class="lane-track"><div class="lane-runner" style="left:calc(8px + (100% - 100px) * ${pct/100})"><img class="runner-img" src="runner.png" alt="Corredor" aria-hidden="true"></div></div>
     </div>
     <div class="lane-stats"><strong>${score}</strong><small>${score===1?'acerto':'acertos'}</small></div>
   </div>`;
