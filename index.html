@@ -111,9 +111,10 @@ function show(id){
 }
 async function getOrCreateSession(){
   let game=await getJson("game");
-  if(game && game.sessionId) return game;
+  if(game && game.sessionId && game.version==="v2-stage5") return game;
+
   const sessionId=makeId("session");
-  game={version:"v2-clean",sessionId,status:"lobby",createdAt:now()};
+  game={version:"v2-stage5",sessionId,status:"lobby",createdAt:now()};
   await putJson("game",game);
   await putJson(`sessions/${sessionId}`,{createdAt:now(),status:"lobby"});
   return game;

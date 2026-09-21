@@ -23,6 +23,7 @@ h1{margin:0 0 8px}
 .empty{color:#c8d1e6;border:1px dashed #607399;padding:16px}
 .bad{color:#ff8585}
 .small{font-size:13px;color:#c8d1e6;margin-top:16px}
+button{margin:0 0 16px;padding:10px 16px;font-size:14px;font-weight:700;border:0;cursor:pointer;background:#ffd34d;color:#111}
 </style>
 </head>
 <body>
@@ -30,6 +31,7 @@ h1{margin:0 0 8px}
   <section class="panel">
     <h1>Modo apresentador — Etapa 5</h1>
     <div class="meta">Largada automática e cronômetro individual de 2 minutos</div>
+    <button id="newSessionBtn">NOVA PARTIDA</button>
     <div id="count" class="count">Jogadores: 0</div>
     <div id="players" class="list"><div class="empty">Aguardando jogadores...</div></div>
     <div id="error" class="small"></div>
@@ -66,9 +68,42 @@ async function patchJson(path,value){
   });
   if(!r.ok) throw new Error(`Erro de atualização (${r.status})`);
 }
+async function putJson(path,value){
+  const r=await fetch(`${DB_BASE}/${ROOT}/${path}.json`,{
+    method:"PUT",
+    headers:{"Content-Type":"application/json"},
+    body:JSON.stringify(value)
+  });
+  if(!r.ok) throw new Error(`Erro de gravação (${r.status})`);
+}
+function makeId(prefix){
+  return `${prefix}_${Math.round(now())}_${Math.random().toString(36).slice(2,8)}`;
+}
 function escapeHtml(s){
   return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#039;"}[c]));
 }
+async function newSession(){
+  try{
+    await syncClock();
+    const sessionId=makeId("session");
+    const game={
+      version:"v2-stage5",
+      sessionId,
+      status:"lobby",
+      createdAt:now()
+    };
+    await putJson("game",game);
+    await putJson(`sessions/${sessionId}`,{
+      createdAt:now(),
+      status:"lobby"
+    });
+    await refresh();
+  }catch(err){
+    document.getElementById("error").textContent="Erro ao criar nova partida: "+err.message;
+    document.getElementById("error").className="small bad";
+  }
+}
+
 async function refresh(){
   try{
     const game=await getJson("game");
@@ -128,6 +163,7 @@ async function refresh(){
   }
 }
 
+document.getElementById("newSessionBtn").addEventListener("click",newSession);
 syncClock().then(refresh);
 setInterval(syncClock,30000);
 setInterval(refresh,500);
