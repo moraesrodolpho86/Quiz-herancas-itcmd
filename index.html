@@ -50,8 +50,9 @@ button{font-family:inherit}
 .bonus-badge{display:inline-block;background:#ffd34d;color:#111;font-weight:900;padding:6px 9px;margin-bottom:10px;border:2px solid #111}
 #entry{max-width:520px;margin:auto}
 #countdownScreen{text-align:center}
-@media(max-width:700px){
+@media(max-width:700px) and (orientation:portrait){
   html,body{
+    width:100%;
     height:100dvh;
     min-height:100dvh;
     overflow:hidden;
@@ -61,66 +62,157 @@ button{font-family:inherit}
     padding:0;
     background:#0b1630;
   }
+
   #visualTitle{
-    top:calc(env(safe-area-inset-top,0px) + 10px);
-    left:12px;
-    transform:none;
-    width:calc(100vw - 24px);
-    white-space:normal;
-    font-size:10px;
-    line-height:1.2;
-    padding:6px 8px;
-    text-align:center;
-  }
-  .card{
     position:fixed;
+    top:calc(env(safe-area-inset-top,0px) + 8px);
     left:10px;
     right:10px;
-    top:calc(env(safe-area-inset-top,0px) + 58px);
-    bottom:calc(env(safe-area-inset-bottom,0px) + 180px);
+    width:auto;
+    transform:none;
+    white-space:normal;
+    font-size:9px;
+    line-height:1.15;
+    padding:6px 6px;
+    text-align:center;
+    z-index:6;
+  }
+
+  /* O quiz ocupa apenas a parte superior da tela.
+     A pista fica permanentemente livre na parte inferior. */
+  .card{
+    position:fixed;
+    z-index:5;
+    left:10px;
+    right:10px;
+    top:calc(env(safe-area-inset-top,0px) + 54px);
+    bottom:36dvh;
     width:auto;
     max-height:none;
     margin:0;
-    padding:12px;
-    overflow:auto;
+    padding:10px;
+    overflow-y:auto;
+    overflow-x:hidden;
     overscroll-behavior:contain;
     -webkit-overflow-scrolling:touch;
     box-shadow:5px 5px 0 rgba(0,0,0,.75);
   }
+
   .topbar{
+    display:grid;
     grid-template-columns:1fr 1fr;
-    gap:8px;
-    margin-bottom:10px;
+    gap:6px;
+    margin-bottom:7px;
   }
   .topbar .timer{
     grid-column:1/-1;
     text-align:center;
-    font-size:18px;
+    font-size:16px;
   }
-  .pill{padding:9px 8px;font-size:13px}
-  .progress{height:10px;margin:6px 0 10px}
-  .answers{grid-template-columns:1fr}
-  .question{font-size:15px;line-height:1.3;margin-bottom:10px}
-  .answer{font-size:12px;padding:11px 10px}
-  .feedback{font-size:18px}
-  .explanation{font-size:11px;min-height:24px}
-  .stats{justify-content:center;gap:6px;margin-top:10px}
-  .stat{font-size:12px;padding:6px 7px}
-  h1{font-size:16px}
-  .countdown{font-size:64px}
+  .pill{
+    padding:7px 6px;
+    font-size:11px;
+  }
+
+  .progress{
+    height:8px;
+    margin:5px 0 8px;
+  }
+
+  .small{
+    font-size:10px;
+  }
+
+  .question{
+    font-size:13px;
+    line-height:1.25;
+    margin:0 0 8px;
+  }
+
+  .answers{
+    grid-template-columns:1fr;
+    gap:6px;
+  }
+
+  .answer{
+    font-size:11px;
+    line-height:1.2;
+    padding:8px 8px;
+    min-height:0;
+    box-shadow:2px 2px 0 #111;
+  }
+
+  .feedback{
+    font-size:16px;
+    margin-top:8px;
+    min-height:22px;
+  }
+
+  .explanation{
+    font-size:10px;
+    line-height:1.25;
+    min-height:18px;
+    margin-top:5px;
+  }
+
+  .stats{
+    justify-content:center;
+    gap:5px;
+    margin-top:8px;
+  }
+
+  .stat{
+    font-size:10px;
+    padding:5px 6px;
+  }
+
+  h1{
+    font-size:15px;
+  }
+
+  .countdown{
+    font-size:56px;
+  }
+
+  .final{
+    padding-top:4px;
+  }
+
+  .final h1{
+    font-size:24px;
+    margin-bottom:10px;
+  }
+
+  .final p{
+    margin:9px 0;
+    font-size:13px;
+  }
+
+  .waiting-note{
+    font-size:10px;
+    line-height:1.3;
+  }
+
   #copyright{
     position:fixed;
-    right:10px;
+    right:8px;
     bottom:calc(env(safe-area-inset-bottom,0px) + 4px);
-    font-size:9px;
-    z-index:2;
+    font-size:8px;
+    z-index:3;
   }
+
   #gameCanvas{
     position:fixed;
     inset:0;
     width:100%;
     height:100dvh;
+    z-index:0;
   }
+}
+
+/* Em paisagem ou desktop, mantém o layout já validado. */
+@media(max-width:700px) and (orientation:landscape){
+  .answers{grid-template-columns:1fr 1fr}
 }
 </style>
 </head>
@@ -552,18 +644,19 @@ function currentVisualTarget(){
 function drawScene(ts){
   const w=innerWidth,h=innerHeight;
   const mobile=w<=700;
-  const skyH=mobile?Math.max(220,h*.42):Math.max(150,h*.36);
-  const groundY=mobile?h*.75:h*.80;
+  const portraitMobile=mobile && h>w;
+  const skyH=portraitMobile?Math.max(180,h*.30):(mobile?Math.max(180,h*.34):Math.max(150,h*.36));
+  const groundY=portraitMobile?h*.87:(mobile?h*.80:h*.80);
   pxRect(0,0,w,h,"#10213a");
   pxRect(0,0,w,skyH,"#79c8eb");
   pxRect(0,skyH,w,groundY-skyH,"#88a67b");
   pxRect(0,groundY,w,h-groundY,"#2c3137");
 
   drawPixelCloud(w*.10,65,.8);drawPixelCloud(w*.38,95,1);drawPixelCloud(w*.72,60,.9);
-  drawHouse(w*.08,groundY,mobile?.65:.9);drawHouse(w*.25,groundY,mobile?.55:.7);drawHouse(w*.76,groundY,mobile?.65:.85);
-  drawCoin(w*.49,groundY-(mobile?52:70),mobile?.75:1);drawCoin(w*.57,groundY-(mobile?42:55),mobile?.65:.8);
+  drawHouse(w*.08,groundY,portraitMobile?.48:(mobile?.65:.9));drawHouse(w*.25,groundY,portraitMobile?.42:(mobile?.55:.7));drawHouse(w*.76,groundY,portraitMobile?.48:(mobile?.65:.85));
+  drawCoin(w*.49,groundY-(portraitMobile?38:(mobile?52:70)),portraitMobile?.55:(mobile?.75:1));drawCoin(w*.57,groundY-(portraitMobile?32:(mobile?42:55)),portraitMobile?.50:(mobile?.65:.8));
   // patrimônio / cofre simbólico
-  pxRect(w*.63,groundY-58,66,58,"#707b8c");pxRect(w*.64,groundY-48,46,38,"#364152");
+  pxRect(w*.63,groundY-(portraitMobile?42:58),portraitMobile?48:66,portraitMobile?42:58,"#707b8c");pxRect(w*.64,groundY-(portraitMobile?35:48),portraitMobile?34:46,portraitMobile?27:38,"#364152");
   pxRect(w*.64+16,groundY-35,12,12,"#ffcb42");
 
   const trackY=groundY-24;
@@ -573,16 +666,16 @@ function drawScene(ts){
   for(let i=0;i<8;i++)pxRect(48,trackY-86+i*11,7,11,i%2?"#111":"#fff");
   pxRect(28,trackY-108,70,18,"#0f1a33");
   gctx.fillStyle="#ffd34d";gctx.font="bold 11px Courier New";gctx.fillText("LARGADA",34,trackY-95);
-  const finishX=w-(mobile?88:100);drawFinish(finishX,trackY+2);
+  const finishX=w-(portraitMobile?72:(mobile?88:100));drawFinish(finishX,trackY+2);
 
   visualTarget=currentVisualTarget();
   visualProgress += (visualTarget-visualProgress)*.05;
   if(!lastVisualTs)lastVisualTs=ts;
   if(ts-lastVisualTs>105){spriteFrame=(spriteFrame+1)%4;lastVisualTs=ts;}
 
-  const startX=mobile?55:70, endX=finishX-(mobile?92:58);
+  const startX=portraitMobile?48:(mobile?55:70), endX=finishX-(portraitMobile?76:(mobile?92:58));
   const rx=startX+(endX-startX)*visualProgress;
-  const spriteW=mobile?118:130, spriteH=mobile?92:100;
+  const spriteW=portraitMobile?100:(mobile?118:130), spriteH=portraitMobile?78:(mobile?92:100);
   if(runnerSprite.complete && runnerSprite.naturalWidth){
     const fw=runnerSprite.naturalWidth/4, fh=runnerSprite.naturalHeight;
     gctx.drawImage(runnerSprite,fw*spriteFrame,0,fw,fh,rx-spriteW*.25,trackY-spriteH+10,spriteW,spriteH);
