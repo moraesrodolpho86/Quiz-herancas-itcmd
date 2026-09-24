@@ -240,8 +240,8 @@ button{font-family:inherit}
 <section id="quizScreen" class="hidden">
   <div class="topbar">
     <div class="pill" id="playerLabel">Jogador</div>
-    <div class="pill qtimer">QUESTÃO: <span id="questionTimer">15</span>s</div>
-    <div class="pill timer">TEMPO: <span id="gameTimer">02:00</span></div>
+    <div class="pill qtimer">QUESTÃO: <span id="questionTimer">25</span>s</div>
+    <div class="pill timer">TEMPO: <span id="gameTimer">04:00</span></div>
   </div>
   <div class="progress"><div id="progressFill"></div></div>
   <div class="small" id="questionCount">Pergunta 1/8</div>
@@ -269,7 +269,7 @@ button{font-family:inherit}
   <div class="bonus-badge">PERGUNTA BÔNUS / DESEMPATE</div>
   <div class="topbar">
     <div class="pill" id="bonusPlayerLabel">Jogador</div>
-    <div class="pill qtimer">QUESTÃO: <span id="bonusTimer">15</span>s</div>
+    <div class="pill qtimer">QUESTÃO: <span id="bonusTimer">25</span>s</div>
   </div>
   <div class="question" id="bonusQuestionText"></div>
   <div class="answers" id="bonusAnswers"></div>
@@ -284,8 +284,8 @@ const ROOT="quizHerancasV2";
 const VERSION="v2-stage7";
 const COUNTDOWN_MS=2200;
 const COUNTDOWN_STEP=550;
-const GAME_DURATION=120000;
-const QUESTION_SECONDS=15;
+const GAME_DURATION=240000;
+const QUESTION_SECONDS=25;
 const QUESTIONS=[{"question":"Segundo Thomas Piketty, qual era o peso do fluxo anual de heranças e doações na renda nacional francesa durante o século XIX?","answers":["Entre 5% e 10%","Entre 10% e 15%","Entre 20% e 25%","Entre 35% e 40%"],"correct":2,"explanation":"Resposta correta: C. Entre 20% e 25%."},{"question":"Na análise de Thomas Piketty, o que significa a relação r > g?","answers":["A renda do trabalho cresce mais rapidamente que a riqueza herdada.","A taxa de retorno do capital é superior à taxa de crescimento da economia.","A arrecadação tributária cresce mais rapidamente que o PIB.","A taxa de crescimento populacional é maior que a taxa de retorno do capital."],"correct":1,"explanation":"Resposta correta: B. A taxa de retorno do capital é superior à taxa de crescimento da economia."},{"question":"Quais são as três forças que compõem a equação do fluxo econômico anual das heranças formulada por Piketty?","answers":["Renda, poupança e tributação.","Crescimento econômico, inflação e taxa de juros.","Relação capital/renda, taxa de mortalidade e relação entre a riqueza dos falecidos e a riqueza dos vivos.","Fecundidade, expectativa de vida e renda do trabalho."],"correct":2,"explanation":"Resposta correta: C. Relação capital/renda, taxa de mortalidade e relação entre a riqueza dos falecidos e a riqueza dos vivos."},{"question":"Segundo o levantamento internacional apresentado, qual alternativa reúne os países indicados como sem imposto sobre heranças no contexto analisado?","answers":["Argentina, Canadá, México, Portugal.","Argentina, México, Panamá, Peru e Uruguai.","Austrália, Costa Rica, Noruega e Panamá.","Japão, México, Panamá, Reino Unido e Suécia."],"correct":1,"explanation":"No levantamento utilizado, México e Peru aparecem entre os países que aboliram o imposto sobre heranças, enquanto Argentina, Costa Rica, Panamá e Uruguai são mencionados entre aqueles que não o haviam introduzido no contexto analisado."},{"question":"No comparativo internacional apresentado, qual país possui a maior alíquota máxima do imposto sobre heranças?","answers":["França","Coreia do Sul","Japão","Reino Unido"],"correct":2,"explanation":"Resposta correta: C. Japão — 55%."},{"question":"Qual é a alíquota máxima nacional atualmente permitida para o ITCMD no Brasil?","answers":["4%","6%","8%","12%"],"correct":2,"explanation":"Resposta correta: C. 8%."},{"question":"No levantamento de 2026, em quantas das 27 unidades da Federação o ITCMD possui estrutura de alíquota única, isto é, não progressiva?","answers":["5","7","10","17"],"correct":1,"explanation":"Resposta correta: B. 7."},{"question":"No contexto jurídico apresentado, qual lacuna ou dificuldade favorecia a redução ou evasão da tributação sobre grandes heranças?","answers":["A impossibilidade de adoção de alíquotas progressivas.","A obrigatoriedade de divisão igualitária de todo o patrimônio entre os herdeiros.","As dificuldades de tributação das transmissões oriundas do exterior, especialmente envolvendo trusts e estruturas offshore.","A repartição obrigatória do ITCMD com os municípios."],"correct":2,"explanation":"Resposta correta: C. As dificuldades de tributação das transmissões oriundas do exterior, especialmente envolvendo trusts e estruturas offshore."}];
 const BONUS_QUESTION={"question":"Em 2019, segundo apresentação, qual parcela do valor total das heranças foi recebida pelo grupo do 1% mais rico?","answers":["35,3%","50,0%","62,6%","80,9%"],"correct":3,"explanation":"Resposta correta: D. 80,9%."};
 
@@ -369,7 +369,7 @@ async function finishGame(reason){
   document.getElementById("finalHits").textContent=hits;
   document.getElementById("finalScore").textContent=score;
   document.getElementById("finalTime").textContent=formatTime(finishElapsedMs);
-  document.getElementById("finishReason").textContent=reason==="questions"?"Você respondeu as 8 perguntas.":"O tempo de 2 minutos foi encerrado.";
+  document.getElementById("finishReason").textContent=reason==="questions"?"Você respondeu as 8 perguntas.":"O tempo de 4 minutos foi encerrado.";
   show("finishedScreen");
   startBonusWatcher();
 }
