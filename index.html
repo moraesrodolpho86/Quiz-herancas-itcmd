@@ -46,6 +46,7 @@ button{font-family:inherit}
 .stat{background:#0f1a33;border:2px solid #fff;padding:7px 9px;font-weight:900}
 .final{text-align:center}
 .final strong{color:#63df95}
+.final-message{margin-top:42px;text-align:center;font-size:24px;font-weight:900;color:#ffd34d;line-height:1.2}
 .waiting-note{margin-top:12px;color:#c8d1e6;font-size:12px;line-height:1.4}
 .bonus-badge{display:inline-block;background:#ffd34d;color:#111;font-weight:900;padding:6px 9px;margin-bottom:10px;border:2px solid #111}
 #entry{max-width:520px;margin:auto}
@@ -188,6 +189,11 @@ button{font-family:inherit}
     font-size:13px;
   }
 
+  .final-message{
+    margin-top:44px;
+    font-size:21px;
+  }
+
   .waiting-note{
     font-size:10px;
     line-height:1.3;
@@ -263,6 +269,7 @@ button{font-family:inherit}
   <p>Pontuação: <strong id="finalScore">0</strong></p>
   <p>Tempo: <strong id="finalTime">00:00</strong></p>
   <p class="waiting-note">Resultado registrado. Se houver empate técnico, a pergunta bônus aparecerá automaticamente.</p>
+  <div class="final-message">Você é um amigo!</div>
 </section>
 
 <section id="bonusScreen" class="hidden">
